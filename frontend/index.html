@@ -9,17 +9,20 @@
   <body>
     <main class="shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">CCP 2.0</p>
-          <h1>AxisDeck</h1>
+        <div class="topbar-spacer" aria-hidden="true"></div>
+        <div class="topbar-actions">
+          <div class="status" id="connectionStatus">Connecting</div>
+          <select class="mode-select" id="controlMode" aria-label="Control mode">
+            <option value="joystick">Joystick</option>
+            <option value="steering">Steering</option>
+          </select>
         </div>
-        <div class="status" id="connectionStatus">Connecting</div>
       </header>
 
       <section class="controls" aria-label="Control deck">
         <article class="panel joystick-panel">
           <div class="panel-header">
-            <h2>Joystick</h2>
+            <h2 id="primaryControlTitle">Joystick</h2>
             <output id="joystickReadout">X 0.00 / Y 0.00</output>
           </div>
           <canvas id="joystickCanvas" width="420" height="420" aria-label="Joystick control"></canvas>

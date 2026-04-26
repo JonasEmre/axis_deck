@@ -42,7 +42,7 @@ canvas,
     max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
 .topbar {
@@ -50,30 +50,27 @@ canvas,
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 72px;
+  min-height: 44px;
 }
 
-.eyebrow {
-  color: var(--accent);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  margin: 0 0 4px;
-  text-transform: uppercase;
+.topbar-spacer {
+  flex: 1;
+  min-width: 0;
 }
 
-h1,
 h2 {
   margin: 0;
   letter-spacing: 0;
 }
 
-h1 {
-  font-size: clamp(1.8rem, 4vw, 3rem);
-}
-
 h2 {
   font-size: 1rem;
+}
+
+.topbar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .status {
@@ -85,6 +82,17 @@ h2 {
   color: var(--warning);
   font-weight: 700;
   text-align: center;
+}
+
+.mode-select {
+  min-width: 132px;
+  padding: 10px 34px 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
 }
 
 .status.connected {
@@ -130,7 +138,7 @@ output {
 
 #joystickCanvas {
   width: 100%;
-  max-height: calc(100vh - 160px);
+  max-height: calc(100vh - 122px);
   aspect-ratio: 1;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -219,6 +227,24 @@ output {
 }
 
 @media (max-width: 860px) {
+  .topbar {
+    align-items: stretch;
+  }
+
+  .topbar-spacer {
+    display: none;
+  }
+
+  .topbar-actions {
+    width: 100%;
+  }
+
+  .status,
+  .mode-select {
+    flex: 1;
+    min-width: 0;
+  }
+
   .controls {
     grid-template-columns: minmax(0, 1fr);
   }
