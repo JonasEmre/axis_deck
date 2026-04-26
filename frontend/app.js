@@ -5,6 +5,8 @@ const joystickReadout = document.querySelector("#joystickReadout");
 const primaryControlTitle = document.querySelector("#primaryControlTitle");
 const pedalsReadout = document.querySelector("#pedalsReadout");
 const springAxisEls = [...document.querySelectorAll(".spring-axis")];
+const gearSlotEls = [...document.querySelectorAll(".gear-slot")];
+const gearKnob = document.querySelector("#gearKnob");
 const buttonReadout = document.querySelector("#buttonReadout");
 const buttonEls = [...document.querySelectorAll(".control-button")];
 
@@ -17,12 +19,19 @@ const state = {
     joystickY: 0,
     throttle: 0,
     brake: 0,
+    clutch: 0,
   },
   buttons: {
-    fire: false,
-    gear: false,
-    boost: false,
-    mode: false,
+    gear1: false,
+    gear2: false,
+    gear3: false,
+    gear4: false,
+    gear5: false,
+    gear6: false,
+    handbrake: false,
+    start: false,
+    lights: false,
+    horn: false,
   },
 };
 
@@ -37,6 +46,7 @@ let controlMode = "joystick";
 let steeringAngle = 0;
 let steeringLastPointerAngle = 0;
 let steeringLastSentAxis = 0;
+let selectedGear = null;
 const springAxisPointers = new Map();
 
 function getClientId() {
@@ -171,7 +181,7 @@ function drawJoystick() {
 function drawSteering() {
   const ctx = joystickCanvas.getContext("2d");
   const { width, height, size, cx, cy } = getCanvasMetrics();
-  const radius = size * 0.34;
+  const radius = size * 0.42;
   const innerRadius = radius * 0.62;
   const markerLength = radius * 0.42;
 
@@ -210,11 +220,6 @@ function drawSteering() {
   ctx.fill();
 
   ctx.restore();
-
-  ctx.fillStyle = "#9aa8b5";
-  ctx.font = `${Math.max(13, size * 0.04)}px system-ui, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.fillText(`${Math.round(steeringAngle)} deg`, cx, height - size * 0.08);
 }
 
 function getCanvasPointerInfo(event) {
@@ -333,7 +338,7 @@ function renderSpringAxis(axisEl) {
 }
 
 function updatePedalsReadout() {
-  pedalsReadout.textContent = `T ${state.axes.throttle.toFixed(2)} / B ${state.axes.brake.toFixed(2)}`;
+  pedalsReadout.textContent = `C ${state.axes.clutch.toFixed(2)} / B ${state.axes.brake.toFixed(2)} / T ${state.axes.throttle.toFixed(2)}`;
 }
 
 function updateSpringAxisFromPointer(axisEl, event) {
@@ -393,6 +398,28 @@ controlModeEl.addEventListener("change", () => {
   controlMode = controlModeEl.value;
   primaryControlTitle.textContent = controlMode === "steering" ? "Steering" : "Joystick";
   resetJoystick();
+});
+
+function setSelectedGear(nextGear) {
+  selectedGear = selectedGear === nextGear ? null : nextGear;
+
+  gearSlotEls.forEach((slot) => {
+    const gearName = slot.dataset.gear;
+    const isActive = gearName === selectedGear;
+    state.buttons[gearName] = isActive;
+    slot.classList.toggle("active", isActive);
+  });
+
+  gearKnob.textContent = selectedGear ? selectedGear.replace("gear", "") : "N";
+  buttonReadout.textContent = selectedGear ? selectedGear : "Ready";
+  sendState();
+}
+
+gearSlotEls.forEach((slot) => {
+  slot.addEventListener("pointerdown", (event) => {
+    slot.setPointerCapture(event.pointerId);
+    setSelectedGear(slot.dataset.gear);
+  });
 });
 
 springAxisEls.forEach((axisEl) => {

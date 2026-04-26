@@ -14,12 +14,13 @@ class LogInputAdapter:
 
         print(
             "[{now}] client={client} ts={ts} "
-            "joy=({jx:+.2f},{jy:+.2f}) throttle={throttle:.2f} brake={brake:.2f} buttons={buttons}".format(
+            "joy=({jx:+.2f},{jy:+.2f}) clutch={clutch:.2f} throttle={throttle:.2f} brake={brake:.2f} buttons={buttons}".format(
                 now=now,
                 client=message.clientId,
                 ts=message.timestamp,
                 jx=axes.joystickX,
                 jy=axes.joystickY,
+                clutch=axes.clutch,
                 throttle=axes.throttle,
                 brake=axes.brake,
                 buttons=buttons,

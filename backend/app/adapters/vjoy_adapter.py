@@ -18,12 +18,19 @@ class VJoyInputAdapter:
             "joystickY": pyvjoy.HID_USAGE_Y,
             "throttle": pyvjoy.HID_USAGE_Z,
             "brake": pyvjoy.HID_USAGE_RZ,
+            "clutch": pyvjoy.HID_USAGE_SL0,
         }
         self._button_map = {
-            "fire": 1,
-            "gear": 2,
-            "boost": 3,
-            "mode": 4,
+            "gear1": 1,
+            "gear2": 2,
+            "gear3": 3,
+            "gear4": 4,
+            "gear5": 5,
+            "gear6": 6,
+            "handbrake": 7,
+            "start": 8,
+            "lights": 9,
+            "horn": 10,
         }
 
     async def handle_control_state(self, message: ControlStateMessage) -> None:
@@ -32,12 +39,19 @@ class VJoyInputAdapter:
         self._set_axis("joystickY", self._signed_axis_to_vjoy(-axes.joystickY))
         self._set_axis("throttle", self._unsigned_axis_to_vjoy(axes.throttle))
         self._set_axis("brake", self._unsigned_axis_to_vjoy(axes.brake))
+        self._set_axis("clutch", self._unsigned_axis_to_vjoy(axes.clutch))
 
         for button_name, button_id in self._button_map.items():
-            self._device.set_button(button_id, int(message.buttons.get(button_name, False)))
+            try:
+                self._device.set_button(button_id, int(message.buttons.get(button_name, False)))
+            except Exception:
+                continue
 
     def _set_axis(self, axis_name: str, value: int) -> None:
-        self._device.set_axis(self._axis_map[axis_name], value)
+        try:
+            self._device.set_axis(self._axis_map[axis_name], value)
+        except Exception:
+            pass
 
     def _signed_axis_to_vjoy(self, value: float) -> int:
         normalized = (self._clamp(value, -1.0, 1.0) + 1.0) / 2.0

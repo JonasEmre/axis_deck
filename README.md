@@ -85,6 +85,10 @@ Beklenen mapping:
 
 - Steering/joystick X -> vJoy X Axis
 - Joystick Y -> vJoy Y Axis
+- Clutch -> vJoy Slider 0
 - Throttle -> vJoy Z Axis
 - Brake -> vJoy Rz Axis
-- Fire/Gear/Boost/Mode -> vJoy Button 1-4
+- Gear 1-6 -> vJoy Button 1-6
+- Handbrake/Start/Lights/Horn -> vJoy Button 7-10
+
+vJoy Config içinde Device 1 için `X`, `Y`, `Z`, `Rz`, `Slider 0` ve en az `10` button aktif olmalı.
