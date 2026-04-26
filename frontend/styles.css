@@ -31,7 +31,8 @@ body {
 }
 
 button,
-canvas {
+canvas,
+.spring-axis {
   touch-action: none;
 }
 
@@ -137,28 +138,49 @@ output {
   display: block;
 }
 
-.throttle-panel {
+.pedals-panel {
   min-height: 320px;
 }
 
-.throttle {
-  position: relative;
+.pedals {
   flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   min-height: 280px;
+}
+
+.spring-axis {
+  position: relative;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #121820;
   overflow: hidden;
 }
 
-.throttle-fill {
+.axis-label {
+  position: absolute;
+  inset: 12px 8px auto;
+  z-index: 2;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.spring-axis-fill {
   position: absolute;
   inset: auto 0 0;
   height: 0%;
   background: linear-gradient(0deg, var(--accent-strong), var(--accent));
 }
 
-.throttle-thumb {
+.brake-fill {
+  background: linear-gradient(0deg, #cf5a63, #ff8a7a);
+}
+
+.spring-axis-thumb {
   position: absolute;
   left: 10px;
   right: 10px;
@@ -205,11 +227,11 @@ output {
     max-height: 52vh;
   }
 
-  .throttle-panel {
+  .pedals-panel {
     min-height: 220px;
   }
 
-  .throttle {
+  .pedals {
     min-height: 180px;
   }
 }

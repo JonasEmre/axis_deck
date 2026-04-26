@@ -1,10 +1,8 @@
 const statusEl = document.querySelector("#connectionStatus");
 const joystickCanvas = document.querySelector("#joystickCanvas");
 const joystickReadout = document.querySelector("#joystickReadout");
-const throttleControl = document.querySelector("#throttleControl");
-const throttleFill = document.querySelector("#throttleFill");
-const throttleThumb = document.querySelector("#throttleThumb");
-const throttleReadout = document.querySelector("#throttleReadout");
+const pedalsReadout = document.querySelector("#pedalsReadout");
+const springAxisEls = [...document.querySelectorAll(".spring-axis")];
 const buttonReadout = document.querySelector("#buttonReadout");
 const buttonEls = [...document.querySelectorAll(".control-button")];
 
@@ -14,11 +12,12 @@ const state = {
     joystickX: 0,
     joystickY: 0,
     throttle: 0,
+    brake: 0,
   },
   buttons: {
     fire: false,
     gear: false,
-    brake: false,
+    boost: false,
     mode: false,
   },
 };
@@ -26,7 +25,7 @@ const state = {
 let socket = null;
 let reconnectTimer = null;
 let joystickPointerId = null;
-let throttlePointerId = null;
+const springAxisPointers = new Map();
 
 function getClientId() {
   const existing = window.localStorage.getItem("ccpClientId");
@@ -157,6 +156,7 @@ function updateJoystickFromPointer(event) {
 }
 
 function resetJoystick() {
+  joystickPointerId = null;
   state.axes.joystickX = 0;
   state.axes.joystickY = 0;
   joystickReadout.textContent = "X 0.00 / Y 0.00";
@@ -164,16 +164,38 @@ function resetJoystick() {
   sendState();
 }
 
-function updateThrottleFromPointer(event) {
-  const rect = throttleControl.getBoundingClientRect();
-  const y = clamp(event.clientY - rect.top, 0, rect.height);
-  state.axes.throttle = roundAxis(1 - y / rect.height);
-  const percent = state.axes.throttle * 100;
+function renderSpringAxis(axisEl) {
+  const axisName = axisEl.dataset.axis;
+  const percent = state.axes[axisName] * 100;
+  const fill = axisEl.querySelector(".spring-axis-fill");
+  const thumb = axisEl.querySelector(".spring-axis-thumb");
 
-  throttleFill.style.height = `${percent}%`;
-  throttleThumb.style.bottom = `${percent}%`;
-  throttleReadout.textContent = state.axes.throttle.toFixed(2);
-  throttleControl.setAttribute("aria-valuenow", String(Math.round(percent)));
+  fill.style.height = `${percent}%`;
+  thumb.style.bottom = `${percent}%`;
+  axisEl.setAttribute("aria-valuenow", String(Math.round(percent)));
+}
+
+function updatePedalsReadout() {
+  pedalsReadout.textContent = `T ${state.axes.throttle.toFixed(2)} / B ${state.axes.brake.toFixed(2)}`;
+}
+
+function updateSpringAxisFromPointer(axisEl, event) {
+  const axisName = axisEl.dataset.axis;
+  const rect = axisEl.getBoundingClientRect();
+  const y = clamp(event.clientY - rect.top, 0, rect.height);
+  state.axes[axisName] = roundAxis(1 - y / rect.height);
+
+  renderSpringAxis(axisEl);
+  updatePedalsReadout();
+  sendState();
+}
+
+function resetSpringAxis(axisEl) {
+  const axisName = axisEl.dataset.axis;
+  springAxisPointers.delete(axisName);
+  state.axes[axisName] = 0;
+  renderSpringAxis(axisEl);
+  updatePedalsReadout();
   sendState();
 }
 
@@ -191,29 +213,36 @@ joystickCanvas.addEventListener("pointermove", (event) => {
 
 joystickCanvas.addEventListener("pointerup", (event) => {
   if (event.pointerId === joystickPointerId) {
-    joystickPointerId = null;
     resetJoystick();
   }
 });
 
 joystickCanvas.addEventListener("pointercancel", resetJoystick);
+joystickCanvas.addEventListener("lostpointercapture", resetJoystick);
 
-throttleControl.addEventListener("pointerdown", (event) => {
-  throttlePointerId = event.pointerId;
-  throttleControl.setPointerCapture(event.pointerId);
-  updateThrottleFromPointer(event);
-});
+springAxisEls.forEach((axisEl) => {
+  const axisName = axisEl.dataset.axis;
 
-throttleControl.addEventListener("pointermove", (event) => {
-  if (event.pointerId === throttlePointerId) {
-    updateThrottleFromPointer(event);
-  }
-});
+  axisEl.addEventListener("pointerdown", (event) => {
+    springAxisPointers.set(axisName, event.pointerId);
+    axisEl.setPointerCapture(event.pointerId);
+    updateSpringAxisFromPointer(axisEl, event);
+  });
 
-throttleControl.addEventListener("pointerup", (event) => {
-  if (event.pointerId === throttlePointerId) {
-    throttlePointerId = null;
-  }
+  axisEl.addEventListener("pointermove", (event) => {
+    if (springAxisPointers.get(axisName) === event.pointerId) {
+      updateSpringAxisFromPointer(axisEl, event);
+    }
+  });
+
+  axisEl.addEventListener("pointerup", (event) => {
+    if (springAxisPointers.get(axisName) === event.pointerId) {
+      resetSpringAxis(axisEl);
+    }
+  });
+
+  axisEl.addEventListener("pointercancel", () => resetSpringAxis(axisEl));
+  axisEl.addEventListener("lostpointercapture", () => resetSpringAxis(axisEl));
 });
 
 buttonEls.forEach((button) => {
@@ -242,5 +271,7 @@ window.addEventListener("resize", resizeJoystickCanvas);
 window.addEventListener("orientationchange", resizeJoystickCanvas);
 
 resizeJoystickCanvas();
+springAxisEls.forEach(renderSpringAxis);
+updatePedalsReadout();
 connect();
 window.setInterval(sendState, 100);

@@ -9,6 +9,7 @@ class AxesState(BaseModel):
     joystickX: float = Field(ge=-1.0, le=1.0)
     joystickY: float = Field(ge=-1.0, le=1.0)
     throttle: float = Field(ge=0.0, le=1.0)
+    brake: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class ControlStateMessage(BaseModel):

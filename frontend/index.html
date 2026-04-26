@@ -25,14 +25,22 @@
           <canvas id="joystickCanvas" width="420" height="420" aria-label="Joystick control"></canvas>
         </article>
 
-        <article class="panel throttle-panel">
+        <article class="panel pedals-panel">
           <div class="panel-header">
-            <h2>Throttle</h2>
-            <output id="throttleReadout">0.00</output>
+            <h2>Pedals</h2>
+            <output id="pedalsReadout">T 0.00 / B 0.00</output>
           </div>
-          <div class="throttle" id="throttleControl" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-            <div class="throttle-fill" id="throttleFill"></div>
-            <div class="throttle-thumb" id="throttleThumb"></div>
+          <div class="pedals">
+            <div class="spring-axis" data-axis="throttle" role="slider" aria-label="Throttle" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="axis-label">Throttle</div>
+              <div class="spring-axis-fill"></div>
+              <div class="spring-axis-thumb"></div>
+            </div>
+            <div class="spring-axis" data-axis="brake" role="slider" aria-label="Brake" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="axis-label">Brake</div>
+              <div class="spring-axis-fill brake-fill"></div>
+              <div class="spring-axis-thumb"></div>
+            </div>
           </div>
         </article>
 
@@ -44,7 +52,7 @@
           <div class="button-grid">
             <button class="control-button" type="button" data-button="fire">Fire</button>
             <button class="control-button" type="button" data-button="gear">Gear</button>
-            <button class="control-button" type="button" data-button="brake">Brake</button>
+            <button class="control-button" type="button" data-button="boost">Boost</button>
             <button class="control-button" type="button" data-button="mode">Mode</button>
           </div>
         </article>
