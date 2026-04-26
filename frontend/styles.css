@@ -391,6 +391,11 @@ output {
   font-weight: 800;
 }
 
+.icon-button {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
 .control-button.active {
   border-color: var(--accent);
   background: var(--accent-strong);
