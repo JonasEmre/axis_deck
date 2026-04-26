@@ -160,12 +160,12 @@ h2 {
 
 .primary-panel {
   position: relative;
-  padding: 8px;
+  padding: 4px;
 }
 
 .signal-controls {
   position: absolute;
-  inset: 18px 18px auto;
+  inset: 14px 14px auto;
   z-index: 3;
   display: flex;
   justify-content: space-between;
@@ -275,6 +275,8 @@ output {
 
 .shifter-panel {
   min-height: 320px;
+  padding: 8px;
+  gap: 10px;
   justify-content: space-between;
 }
 
@@ -289,12 +291,12 @@ output {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #121820;
-  padding: 18px;
+  padding: 6px;
 }
 
 .shift-gate {
   position: absolute;
-  inset: 18px;
+  inset: 6px;
   pointer-events: none;
 }
 
@@ -306,21 +308,21 @@ output {
 }
 
 .shift-gate::before {
-  left: 10%;
-  right: 10%;
+  left: calc(16.66% - 1px);
+  right: calc(16.66% - 1px);
   top: 50%;
-  height: 12px;
+  height: 14px;
   border-radius: 999px;
   transform: translateY(-50%);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .shift-gate::after {
-  inset: 10% 0;
+  inset: 16.66% 0;
   background:
-    linear-gradient(90deg, transparent calc(16.66% - 6px), #34404c calc(16.66% - 6px), #34404c calc(16.66% + 6px), transparent calc(16.66% + 6px)),
-    linear-gradient(90deg, transparent calc(50% - 6px), #34404c calc(50% - 6px), #34404c calc(50% + 6px), transparent calc(50% + 6px)),
-    linear-gradient(90deg, transparent calc(83.33% - 6px), #34404c calc(83.33% - 6px), #34404c calc(83.33% + 6px), transparent calc(83.33% + 6px));
+    linear-gradient(90deg, transparent calc(16.66% - 7px), #34404c calc(16.66% - 7px), #34404c calc(16.66% + 7px), transparent calc(16.66% + 7px)),
+    linear-gradient(90deg, transparent calc(50% - 7px), #34404c calc(50% - 7px), #34404c calc(50% + 7px), transparent calc(50% + 7px)),
+    linear-gradient(90deg, transparent calc(83.33% - 7px), #34404c calc(83.33% - 7px), #34404c calc(83.33% + 7px), transparent calc(83.33% + 7px));
   border-radius: 999px;
 }
 
