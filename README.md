@@ -91,5 +91,6 @@ Beklenen mapping:
 - Gear 1-5 + Reverse -> vJoy Button 1-6
 - Handbrake/Start/Lights/Horn -> vJoy Button 7-10
 - Left/Right signal -> vJoy Button 11-12
+- Hazards -> vJoy Button 13
 
-vJoy Config içinde Device 1 için `X`, `Y`, `Z`, `Rz`, `Slider 0` ve en az `12` button aktif olmalı.
+vJoy Config içinde Device 1 için `X`, `Y`, `Z`, `Rz`, `Slider 0` ve en az `13` button aktif olmalı.

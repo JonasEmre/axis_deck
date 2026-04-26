@@ -33,6 +33,7 @@ class VJoyInputAdapter:
             "horn": 10,
             "leftSignal": 11,
             "rightSignal": 12,
+            "hazards": 13,
         }
 
     async def handle_control_state(self, message: ControlStateMessage) -> None:

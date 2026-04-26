@@ -36,7 +36,8 @@ canvas,
 .spring-axis,
 .gear-slot,
 .gear-knob,
-.signal-button {
+.signal-button,
+.topbar-button {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -100,6 +101,23 @@ h2 {
   color: var(--warning);
   font-weight: 700;
   text-align: center;
+}
+
+.topbar-button {
+  min-width: 96px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+}
+
+.topbar-button.active {
+  border-color: var(--accent);
+  background: var(--accent-strong);
+  color: #06110e;
 }
 
 .mode-select {
@@ -389,7 +407,8 @@ output {
   }
 
   .status,
-  .mode-select {
+  .mode-select,
+  .topbar-button {
     flex: 1;
     min-width: 0;
   }

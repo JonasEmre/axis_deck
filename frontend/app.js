@@ -10,7 +10,7 @@ const gearSlotEls = [...document.querySelectorAll(".gear-slot")];
 const gearKnob = document.querySelector("#gearKnob");
 const signalButtonEls = [...document.querySelectorAll(".signal-button")];
 const buttonReadout = document.querySelector("#buttonReadout");
-const buttonEls = [...document.querySelectorAll(".control-button")];
+const buttonEls = [...document.querySelectorAll(".control-button, .topbar-button")];
 
 const FRAME_INTERVAL_MS = 1000 / 60;
 const SEND_INTERVAL_MS = 100;
@@ -32,6 +32,7 @@ const state = {
     reverse: false,
     handbrake: false,
     start: false,
+    hazards: false,
     lights: false,
     horn: false,
     leftSignal: false,
