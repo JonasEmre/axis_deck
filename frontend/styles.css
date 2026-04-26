@@ -20,6 +20,8 @@ html,
 body {
   height: 100%;
   margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -29,6 +31,7 @@ body {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 button,
@@ -41,6 +44,7 @@ canvas,
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .shell {

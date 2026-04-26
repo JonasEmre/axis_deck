@@ -14,6 +14,7 @@ const buttonEls = [...document.querySelectorAll(".control-button, .topbar-button
 
 const FRAME_INTERVAL_MS = 1000 / 60;
 const SEND_INTERVAL_MS = 100;
+const DOUBLE_TAP_ZOOM_WINDOW_MS = 300;
 const clientId = getClientId();
 const state = {
   axes: {
@@ -62,6 +63,7 @@ let shifterLastPointer = null;
 let knobPosition = { x: 0, y: 0 };
 let lastGateZone = "neutral";
 let lastShiftSoundAt = 0;
+let lastTouchEndAt = 0;
 let audioContext = null;
 const springAxisPointers = new Map();
 
@@ -127,6 +129,32 @@ function clamp(value, min, max) {
 
 function roundAxis(value) {
   return Math.round(value * 1000) / 1000;
+}
+
+function preventPageZoomGestures() {
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      const now = Date.now();
+
+      if (now - lastTouchEndAt <= DOUBLE_TAP_ZOOM_WINDOW_MS) {
+        event.preventDefault();
+      }
+
+      lastTouchEndAt = now;
+    },
+    { passive: false },
+  );
+
+  for (const gestureEvent of ["gesturestart", "gesturechange", "gestureend"]) {
+    document.addEventListener(
+      gestureEvent,
+      (event) => {
+        event.preventDefault();
+      },
+      { passive: false },
+    );
+  }
 }
 
 function resizeJoystickCanvas() {
@@ -765,6 +793,7 @@ window.addEventListener("orientationchange", resizeJoystickCanvas);
 resizeJoystickCanvas();
 springAxisEls.forEach(renderSpringAxis);
 updatePedalsReadout();
+preventPageZoomGestures();
 connect();
 window.setInterval(animateSteeringReturn, FRAME_INTERVAL_MS);
 window.setInterval(sendState, SEND_INTERVAL_MS);
