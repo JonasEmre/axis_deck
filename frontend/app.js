@@ -40,7 +40,10 @@ const STEERING_MAX_ROTATION_DEGREES = 450;
 const STEERING_RETURN_RATE = 3.2;
 const STEERING_CENTER_EPSILON_DEGREES = 0.35;
 const SHIFTER_SLOT_SNAP_RATIO = 0.24;
-const SHIFTER_COLUMN_SWITCH_RATIO = 0.16;
+const SHIFTER_COLUMN_BAND_RATIO = 0.11;
+const SHIFTER_NEUTRAL_BAND_RATIO = 0.055;
+const SHIFTER_VERTICAL_ENTRY_RATIO = 0.55;
+const SHIFTER_TICK_COOLDOWN_MS = 90;
 
 let socket = null;
 let reconnectTimer = null;
@@ -51,6 +54,11 @@ let steeringLastPointerAngle = 0;
 let steeringLastSentAxis = 0;
 let selectedGear = null;
 let shifterPointerId = null;
+let shifterLastPointer = null;
+let knobPosition = { x: 0, y: 0 };
+let lastGateZone = "neutral";
+let lastShiftSoundAt = 0;
+let audioContext = null;
 const springAxisPointers = new Map();
 
 function getClientId() {
@@ -427,6 +435,65 @@ function getGearLabel(gearName) {
   return gearName.replace("gear", "");
 }
 
+function ensureAudioContext() {
+  if (!audioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      return null;
+    }
+
+    audioContext = new AudioContextClass();
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+
+  return audioContext;
+}
+
+function playShiftSound(kind) {
+  const ctx = ensureAudioContext();
+  if (!ctx) {
+    return;
+  }
+
+  const now = ctx.currentTime;
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+  const config = {
+    tick: { frequency: 850, duration: 0.025, volume: 0.045 },
+    clack: { frequency: 420, duration: 0.055, volume: 0.09 },
+    neutral: { frequency: 620, duration: 0.035, volume: 0.055 },
+  }[kind];
+
+  oscillator.type = "square";
+  oscillator.frequency.setValueAtTime(config.frequency, now);
+  oscillator.frequency.exponentialRampToValueAtTime(config.frequency * 0.55, now + config.duration);
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(1800, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(config.volume, now + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + config.duration);
+  oscillator.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  oscillator.start(now);
+  oscillator.stop(now + config.duration + 0.01);
+}
+
+function playGateTick(nextZone) {
+  const now = Date.now();
+  if (nextZone === lastGateZone || now - lastShiftSoundAt < SHIFTER_TICK_COOLDOWN_MS) {
+    return;
+  }
+
+  lastGateZone = nextZone;
+  lastShiftSoundAt = now;
+  playShiftSound("tick");
+}
+
 function setGearKnobOffset(x, y) {
   gearKnob.style.setProperty("--knob-x", `${x}px`);
   gearKnob.style.setProperty("--knob-y", `${y}px`);
@@ -444,6 +511,8 @@ function getShifterCenter() {
 }
 
 function getGearSlots() {
+  const center = getShifterCenter();
+
   return gearSlotEls.map((slot) => {
     const rect = slot.getBoundingClientRect();
 
@@ -451,61 +520,62 @@ function getGearSlots() {
       gear: slot.dataset.gear,
       x: rect.left + rect.width / 2,
       y: rect.top + rect.height / 2,
+      offsetX: rect.left + rect.width / 2 - center.x,
+      offsetY: rect.top + rect.height / 2 - center.y,
     };
   });
 }
 
-function getShifterColumns() {
+function getShifterMetrics() {
+  const center = getShifterCenter();
+  const shifterRect = shifter.getBoundingClientRect();
+  const slots = getGearSlots();
   const columns = [];
 
-  getGearSlots().forEach((slot) => {
-    if (!columns.some((column) => Math.abs(column - slot.x) < 1)) {
-      columns.push(slot.x);
+  slots.forEach((slot) => {
+    if (!columns.some((column) => Math.abs(column - slot.offsetX) < 1)) {
+      columns.push(slot.offsetX);
     }
   });
 
-  return columns.sort((a, b) => a - b);
+  columns.sort((a, b) => a - b);
+
+  return {
+    center,
+    slots,
+    columns,
+    minX: columns[0],
+    maxX: columns[columns.length - 1],
+    minY: Math.min(...slots.map((slot) => slot.offsetY)),
+    maxY: Math.max(...slots.map((slot) => slot.offsetY)),
+    columnBand: shifterRect.width * SHIFTER_COLUMN_BAND_RATIO,
+    neutralBand: shifterRect.height * SHIFTER_NEUTRAL_BAND_RATIO,
+  };
 }
 
-function getNearestColumn(x) {
-  return getShifterColumns().reduce((nearest, column) => {
+function getNearestColumn(x, metrics = getShifterMetrics()) {
+  return metrics.columns.reduce((nearest, column) => {
     return Math.abs(column - x) < Math.abs(nearest - x) ? column : nearest;
   });
 }
 
-function getShifterPathPoint(event) {
-  const center = getShifterCenter();
-  const shifterRect = shifter.getBoundingClientRect();
-  const columns = getShifterColumns();
-  const horizontalMin = columns[0];
-  const horizontalMax = columns[columns.length - 1];
-  const rawX = clamp(event.clientX, horizontalMin, horizontalMax);
-  const nearestColumn = getNearestColumn(rawX);
-  const columnSwitchDistance = shifterRect.width * SHIFTER_COLUMN_SWITCH_RATIO;
-  const isOnColumn = Math.abs(rawX - nearestColumn) <= columnSwitchDistance;
+function getGateZone(metrics = getShifterMetrics()) {
+  const nearestColumn = getNearestColumn(knobPosition.x, metrics);
+  const columnIndex = metrics.columns.indexOf(nearestColumn);
 
-  if (!isOnColumn) {
-    return {
-      x: rawX,
-      y: center.y,
-    };
+  if (Math.abs(knobPosition.y) <= metrics.neutralBand) {
+    return `neutral-${columnIndex}`;
   }
 
-  const columnSlots = getGearSlots().filter((slot) => Math.abs(slot.x - nearestColumn) < 1);
-  const minY = Math.min(...columnSlots.map((slot) => slot.y));
-  const maxY = Math.max(...columnSlots.map((slot) => slot.y));
-
-  return {
-    x: nearestColumn,
-    y: clamp(event.clientY, minY, maxY),
-  };
+  return `${columnIndex}-${knobPosition.y < 0 ? "top" : "bottom"}`;
 }
 
-function getNearestGearSlot(point) {
+function getNearestGearSlot() {
   const shifterRect = shifter.getBoundingClientRect();
+  const metrics = getShifterMetrics();
   const snapDistance = Math.min(shifterRect.width, shifterRect.height) * SHIFTER_SLOT_SNAP_RATIO;
-  const nearest = getGearSlots().reduce((current, slot) => {
-    const distance = Math.hypot(point.x - slot.x, point.y - slot.y);
+  const nearest = metrics.slots.reduce((current, slot) => {
+    const distance = Math.hypot(knobPosition.x - slot.offsetX, knobPosition.y - slot.offsetY);
 
     if (!current || distance < current.distance) {
       return { ...slot, distance };
@@ -517,35 +587,80 @@ function getNearestGearSlot(point) {
   return nearest && nearest.distance <= snapDistance ? nearest : null;
 }
 
-function updateShifterDrag(event) {
-  const center = getShifterCenter();
-  const pathPoint = getShifterPathPoint(event);
-  const offsetX = pathPoint.x - center.x;
-  const offsetY = pathPoint.y - center.y;
+function updateKnobFromDelta(dx, dy) {
+  const metrics = getShifterMetrics();
+  const wasInNeutral = Math.abs(knobPosition.y) <= metrics.neutralBand;
+  let nextX = knobPosition.x;
+  let nextY = knobPosition.y;
 
-  setGearKnobOffset(offsetX, offsetY);
+  if (wasInNeutral) {
+    nextX = clamp(nextX + dx, metrics.minX, metrics.maxX);
+    const nearestColumn = getNearestColumn(nextX, metrics);
+    const isNearColumn = Math.abs(nextX - nearestColumn) <= metrics.columnBand;
+    const wantsVertical = Math.abs(dx) <= Math.abs(dy) * SHIFTER_VERTICAL_ENTRY_RATIO;
+
+    if (isNearColumn && wantsVertical) {
+      nextX += (nearestColumn - nextX) * 0.55;
+      nextY = clamp(nextY + dy * 0.82, metrics.minY, metrics.maxY);
+    } else {
+      nextY *= 0.45;
+    }
+  } else {
+    const lockedColumn = getNearestColumn(nextX, metrics);
+    nextX += (lockedColumn - nextX) * 0.7;
+    nextY = clamp(nextY + dy, metrics.minY, metrics.maxY);
+
+    if (Math.abs(nextY) <= metrics.neutralBand) {
+      nextY = 0;
+      nextX = clamp(nextX + dx * 0.75, metrics.minX, metrics.maxX);
+    }
+  }
+
+  knobPosition = {
+    x: Math.abs(nextX) < 0.5 ? 0 : nextX,
+    y: Math.abs(nextY) < 0.5 ? 0 : nextY,
+  };
+
+  setGearKnobOffset(knobPosition.x, knobPosition.y);
+  playGateTick(getGateZone(metrics));
+}
+
+function updateShifterDrag(event) {
+  if (!shifterLastPointer) {
+    shifterLastPointer = { x: event.clientX, y: event.clientY };
+    return;
+  }
+
+  const dx = event.clientX - shifterLastPointer.x;
+  const dy = event.clientY - shifterLastPointer.y;
+  shifterLastPointer = { x: event.clientX, y: event.clientY };
+  updateKnobFromDelta(dx, dy);
 }
 
 function releaseShifter(event) {
   shifterPointerId = null;
-  const pathPoint = getShifterPathPoint(event);
-  const nearest = getNearestGearSlot(pathPoint);
+  shifterLastPointer = null;
+  const nearest = getNearestGearSlot();
 
   if (!nearest) {
     setSelectedGear(null);
+    knobPosition = { x: 0, y: 0 };
     setGearKnobOffset(0, 0);
+    playShiftSound("neutral");
     return;
   }
 
-  const center = getShifterCenter();
   setSelectedGear(nearest.gear);
-  setGearKnobOffset(nearest.x - center.x, nearest.y - center.y);
+  knobPosition = { x: nearest.offsetX, y: nearest.offsetY };
+  setGearKnobOffset(knobPosition.x, knobPosition.y);
+  playShiftSound("clack");
 }
 
 shifter.addEventListener("pointerdown", (event) => {
+  ensureAudioContext();
   shifterPointerId = event.pointerId;
+  shifterLastPointer = { x: event.clientX, y: event.clientY };
   shifter.setPointerCapture(event.pointerId);
-  updateShifterDrag(event);
 });
 
 shifter.addEventListener("pointermove", (event) => {
@@ -562,6 +677,8 @@ shifter.addEventListener("pointerup", (event) => {
 
 shifter.addEventListener("pointercancel", () => {
   shifterPointerId = null;
+  shifterLastPointer = null;
+  knobPosition = { x: 0, y: 0 };
   setSelectedGear(null);
   setGearKnobOffset(0, 0);
 });
