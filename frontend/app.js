@@ -1,5 +1,9 @@
 const statusEl = document.querySelector("#connectionStatus");
 const controlModeEl = document.querySelector("#controlMode");
+const settingsToggle = document.querySelector("#settingsToggle");
+const settingsPanel = document.querySelector("#settingsPanel");
+const steeringReturnModeEl = document.querySelector("#steeringReturnMode");
+const steeringReturnCustomEl = document.querySelector("#steeringReturnCustom");
 const joystickCanvas = document.querySelector("#joystickCanvas");
 const joystickReadout = document.querySelector("#joystickReadout");
 const primaryControlTitle = document.querySelector("#primaryControlTitle");
@@ -10,7 +14,7 @@ const gearSlotEls = [...document.querySelectorAll(".gear-slot")];
 const gearKnob = document.querySelector("#gearKnob");
 const signalButtonEls = [...document.querySelectorAll(".signal-button")];
 const buttonReadout = document.querySelector("#buttonReadout");
-const buttonEls = [...document.querySelectorAll(".control-button, .topbar-button")];
+const buttonEls = [...document.querySelectorAll(".control-button, .topbar-button[data-button]")];
 
 const FRAME_INTERVAL_MS = 1000 / 60;
 const SEND_INTERVAL_MS = 100;
@@ -43,7 +47,10 @@ const state = {
 };
 
 const STEERING_MAX_ROTATION_DEGREES = 450;
-const STEERING_RETURN_RATE = 3.2;
+const STEERING_RETURN_RATES = {
+  standard: 1.6,
+  fast: 3.2,
+};
 const STEERING_CENTER_EPSILON_DEGREES = 0.35;
 const SHIFTER_SLOT_SNAP_RATIO = 0.24;
 const SHIFTER_COLUMN_BAND_RATIO = 0.11;
@@ -55,6 +62,7 @@ let socket = null;
 let reconnectTimer = null;
 let joystickPointerId = null;
 let controlMode = controlModeEl.value;
+let steeringReturnRate = STEERING_RETURN_RATES.standard;
 let steeringAngle = 0;
 let steeringLastPointerAngle = 0;
 let steeringLastSentAxis = 0;
@@ -357,7 +365,7 @@ function animateSteeringReturn() {
     return;
   }
 
-  const nextAngle = steeringAngle + (0 - steeringAngle) * STEERING_RETURN_RATE * (FRAME_INTERVAL_MS / 1000);
+  const nextAngle = steeringAngle + (0 - steeringAngle) * steeringReturnRate * (FRAME_INTERVAL_MS / 1000);
 
   if (Math.abs(nextAngle) <= STEERING_CENTER_EPSILON_DEGREES) {
     setSteeringAngle(0);
@@ -444,6 +452,35 @@ controlModeEl.addEventListener("change", () => {
   primaryControlTitle.textContent = controlMode === "steering" ? "Steering" : "Joystick";
   resetJoystick();
 });
+
+function updateSteeringReturnSetting() {
+  const mode = steeringReturnModeEl.value;
+  const isCustom = mode === "custom";
+
+  steeringReturnCustomEl.disabled = !isCustom;
+  steeringReturnRate = isCustom
+    ? Number(steeringReturnCustomEl.value)
+    : STEERING_RETURN_RATES[mode];
+}
+
+settingsToggle.addEventListener("pointerdown", (event) => {
+  event.stopPropagation();
+  const shouldOpen = settingsPanel.hidden;
+  settingsPanel.hidden = !shouldOpen;
+  settingsToggle.setAttribute("aria-expanded", String(shouldOpen));
+});
+
+settingsPanel.addEventListener("pointerdown", (event) => {
+  event.stopPropagation();
+});
+
+document.addEventListener("pointerdown", () => {
+  settingsPanel.hidden = true;
+  settingsToggle.setAttribute("aria-expanded", "false");
+});
+
+steeringReturnModeEl.addEventListener("change", updateSteeringReturnSetting);
+steeringReturnCustomEl.addEventListener("input", updateSteeringReturnSetting);
 
 function setSelectedGear(nextGear) {
   selectedGear = nextGear;

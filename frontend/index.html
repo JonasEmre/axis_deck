@@ -13,6 +13,23 @@
         <div class="topbar-actions">
           <div class="status" id="connectionStatus">Connecting</div>
           <button class="topbar-button" type="button" data-button="start">Start</button>
+          <div class="settings-menu">
+            <button class="topbar-button" type="button" id="settingsToggle" aria-expanded="false">Settings</button>
+            <div class="settings-panel" id="settingsPanel" hidden>
+              <label class="settings-field">
+                <span>Steering Return</span>
+                <select id="steeringReturnMode" aria-label="Steering return mode">
+                  <option value="standard" selected>Standard</option>
+                  <option value="fast">Fast</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </label>
+              <label class="settings-field">
+                <span>Custom Return</span>
+                <input id="steeringReturnCustom" type="range" min="1.2" max="4.2" step="0.1" value="1.6" disabled />
+              </label>
+            </div>
+          </div>
           <select class="mode-select" id="controlMode" aria-label="Control mode">
             <option value="joystick">Joystick</option>
             <option value="steering" selected>Steering</option>
