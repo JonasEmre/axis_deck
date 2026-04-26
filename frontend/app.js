@@ -8,6 +8,8 @@ const springAxisEls = [...document.querySelectorAll(".spring-axis")];
 const buttonReadout = document.querySelector("#buttonReadout");
 const buttonEls = [...document.querySelectorAll(".control-button")];
 
+const FRAME_INTERVAL_MS = 1000 / 60;
+const SEND_INTERVAL_MS = 100;
 const clientId = getClientId();
 const state = {
   axes: {
@@ -25,6 +27,8 @@ const state = {
 };
 
 const STEERING_MAX_ROTATION_DEGREES = 450;
+const STEERING_RETURN_RATE = 3.2;
+const STEERING_CENTER_EPSILON_DEGREES = 0.35;
 
 let socket = null;
 let reconnectTimer = null;
@@ -32,6 +36,7 @@ let joystickPointerId = null;
 let controlMode = "joystick";
 let steeringAngle = 0;
 let steeringLastPointerAngle = 0;
+let steeringLastSentAxis = 0;
 const springAxisPointers = new Map();
 
 function getClientId() {
@@ -265,6 +270,28 @@ function updateSteeringFromPointer(event) {
   sendState();
 }
 
+function setSteeringAngle(nextAngle) {
+  steeringAngle = clamp(
+    nextAngle,
+    -STEERING_MAX_ROTATION_DEGREES,
+    STEERING_MAX_ROTATION_DEGREES,
+  );
+  state.axes.joystickX = roundAxis(steeringAngle / STEERING_MAX_ROTATION_DEGREES);
+  state.axes.joystickY = 0;
+  joystickReadout.textContent = `Steer ${steeringAngle.toFixed(0)} deg / X ${state.axes.joystickX.toFixed(2)}`;
+  drawPrimaryControl();
+}
+
+function releasePrimaryControl() {
+  joystickPointerId = null;
+
+  if (controlMode === "steering") {
+    return;
+  }
+
+  resetJoystick();
+}
+
 function resetJoystick() {
   joystickPointerId = null;
   state.axes.joystickX = 0;
@@ -273,6 +300,25 @@ function resetJoystick() {
   joystickReadout.textContent = "X 0.00 / Y 0.00";
   drawPrimaryControl();
   sendState();
+}
+
+function animateSteeringReturn() {
+  if (controlMode !== "steering" || joystickPointerId !== null || steeringAngle === 0) {
+    return;
+  }
+
+  const nextAngle = steeringAngle + (0 - steeringAngle) * STEERING_RETURN_RATE * (FRAME_INTERVAL_MS / 1000);
+
+  if (Math.abs(nextAngle) <= STEERING_CENTER_EPSILON_DEGREES) {
+    setSteeringAngle(0);
+  } else {
+    setSteeringAngle(nextAngle);
+  }
+
+  if (state.axes.joystickX !== steeringLastSentAxis || steeringAngle === 0) {
+    steeringLastSentAxis = state.axes.joystickX;
+    sendState();
+  }
 }
 
 function renderSpringAxis(axisEl) {
@@ -336,12 +382,12 @@ joystickCanvas.addEventListener("pointermove", (event) => {
 
 joystickCanvas.addEventListener("pointerup", (event) => {
   if (event.pointerId === joystickPointerId) {
-    resetJoystick();
+    releasePrimaryControl();
   }
 });
 
-joystickCanvas.addEventListener("pointercancel", resetJoystick);
-joystickCanvas.addEventListener("lostpointercapture", resetJoystick);
+joystickCanvas.addEventListener("pointercancel", releasePrimaryControl);
+joystickCanvas.addEventListener("lostpointercapture", releasePrimaryControl);
 
 controlModeEl.addEventListener("change", () => {
   controlMode = controlModeEl.value;
@@ -403,4 +449,5 @@ resizeJoystickCanvas();
 springAxisEls.forEach(renderSpringAxis);
 updatePedalsReadout();
 connect();
-window.setInterval(sendState, 100);
+window.setInterval(animateSteeringReturn, FRAME_INTERVAL_MS);
+window.setInterval(sendState, SEND_INTERVAL_MS);
