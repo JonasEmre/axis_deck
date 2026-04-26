@@ -690,13 +690,20 @@ shifter.addEventListener("pointercancel", () => {
 signalButtonEls.forEach((button) => {
   const buttonName = button.dataset.button;
 
+  const setPressed = (isPressed) => {
+    state.buttons[buttonName] = isPressed;
+    button.setAttribute("aria-pressed", String(isPressed));
+    sendState();
+  };
+
   button.addEventListener("pointerdown", (event) => {
     button.setPointerCapture(event.pointerId);
-    state.buttons[buttonName] = !state.buttons[buttonName];
-    button.classList.toggle("active", state.buttons[buttonName]);
-    button.setAttribute("aria-pressed", String(state.buttons[buttonName]));
-    sendState();
+    setPressed(true);
   });
+
+  button.addEventListener("pointerup", () => setPressed(false));
+  button.addEventListener("pointercancel", () => setPressed(false));
+  button.addEventListener("lostpointercapture", () => setPressed(false));
 });
 
 springAxisEls.forEach((axisEl) => {

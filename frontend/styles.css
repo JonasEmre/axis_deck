@@ -187,12 +187,6 @@ h2 {
   pointer-events: auto;
 }
 
-.signal-button.active {
-  border-color: var(--warning);
-  background: var(--warning);
-  color: #15120a;
-}
-
 .panel-header {
   display: flex;
   align-items: center;
