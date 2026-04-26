@@ -193,7 +193,7 @@ h2 {
 .controls {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(340px, 1.42fr) minmax(210px, 0.52fr) minmax(260px, 0.78fr);
+  grid-template-columns: minmax(340px, 1.42fr) repeat(2, minmax(250px, 0.68fr));
   gap: 16px;
   min-height: 0;
 }
