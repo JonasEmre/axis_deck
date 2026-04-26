@@ -198,6 +198,27 @@ h2 {
   min-height: 0;
 }
 
+.controls.gearbox-left .primary-panel,
+.controls.gearbox-right .primary-panel {
+  order: 1;
+}
+
+.controls.gearbox-left .shifter-panel {
+  order: 2;
+}
+
+.controls.gearbox-left .pedals-panel {
+  order: 3;
+}
+
+.controls.gearbox-right .pedals-panel {
+  order: 2;
+}
+
+.controls.gearbox-right .shifter-panel {
+  order: 3;
+}
+
 .panel {
   border: 1px solid var(--line);
   border-radius: 8px;

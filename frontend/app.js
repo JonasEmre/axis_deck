@@ -4,6 +4,8 @@ const settingsToggle = document.querySelector("#settingsToggle");
 const settingsPanel = document.querySelector("#settingsPanel");
 const steeringReturnModeEl = document.querySelector("#steeringReturnMode");
 const steeringReturnCustomEl = document.querySelector("#steeringReturnCustom");
+const gearboxPositionEl = document.querySelector("#gearboxPosition");
+const controlDeck = document.querySelector("#controlDeck");
 const joystickCanvas = document.querySelector("#joystickCanvas");
 const joystickReadout = document.querySelector("#joystickReadout");
 const primaryControlTitle = document.querySelector("#primaryControlTitle");
@@ -463,6 +465,12 @@ function updateSteeringReturnSetting() {
     : STEERING_RETURN_RATES[mode];
 }
 
+function updateGearboxPosition() {
+  const position = gearboxPositionEl.value;
+  controlDeck.classList.toggle("gearbox-left", position === "left");
+  controlDeck.classList.toggle("gearbox-right", position === "right");
+}
+
 settingsToggle.addEventListener("pointerdown", (event) => {
   event.stopPropagation();
   const shouldOpen = settingsPanel.hidden;
@@ -481,6 +489,7 @@ document.addEventListener("pointerdown", () => {
 
 steeringReturnModeEl.addEventListener("change", updateSteeringReturnSetting);
 steeringReturnCustomEl.addEventListener("input", updateSteeringReturnSetting);
+gearboxPositionEl.addEventListener("change", updateGearboxPosition);
 
 function setSelectedGear(nextGear) {
   selectedGear = nextGear;
@@ -833,6 +842,7 @@ resizeJoystickCanvas();
 springAxisEls.forEach(renderSpringAxis);
 updatePedalsReadout();
 preventPageZoomGestures();
+updateGearboxPosition();
 connect();
 window.setInterval(animateSteeringReturn, FRAME_INTERVAL_MS);
 window.setInterval(sendState, SEND_INTERVAL_MS);

@@ -28,6 +28,13 @@
                 <span>Custom Return</span>
                 <input id="steeringReturnCustom" type="range" min="1.2" max="4.2" step="0.1" value="1.6" disabled />
               </label>
+              <label class="settings-field">
+                <span>Gearbox Position</span>
+                <select id="gearboxPosition" aria-label="Gearbox position">
+                  <option value="right" selected>Right</option>
+                  <option value="left">Left</option>
+                </select>
+              </label>
             </div>
           </div>
           <select class="mode-select" id="controlMode" aria-label="Control mode">
@@ -37,7 +44,7 @@
         </div>
       </header>
 
-      <section class="controls" aria-label="Control deck">
+      <section class="controls gearbox-right" id="controlDeck" aria-label="Control deck">
         <article class="panel joystick-panel primary-panel">
           <h2 class="sr-only" id="primaryControlTitle">Steering</h2>
           <output class="sr-only" id="joystickReadout">X 0.00 / Y 0.00</output>
