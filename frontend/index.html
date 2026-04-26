@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>AxisDeck</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">CCP 2.0</p>
+          <h1>AxisDeck</h1>
+        </div>
+        <div class="status" id="connectionStatus">Connecting</div>
+      </header>
+
+      <section class="controls" aria-label="Control deck">
+        <article class="panel joystick-panel">
+          <div class="panel-header">
+            <h2>Joystick</h2>
+            <output id="joystickReadout">X 0.00 / Y 0.00</output>
+          </div>
+          <canvas id="joystickCanvas" width="420" height="420" aria-label="Joystick control"></canvas>
+        </article>
+
+        <article class="panel throttle-panel">
+          <div class="panel-header">
+            <h2>Throttle</h2>
+            <output id="throttleReadout">0.00</output>
+          </div>
+          <div class="throttle" id="throttleControl" role="slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="throttle-fill" id="throttleFill"></div>
+            <div class="throttle-thumb" id="throttleThumb"></div>
+          </div>
+        </article>
+
+        <article class="panel buttons-panel">
+          <div class="panel-header">
+            <h2>Buttons</h2>
+            <output id="buttonReadout">Ready</output>
+          </div>
+          <div class="button-grid">
+            <button class="control-button" type="button" data-button="fire">Fire</button>
+            <button class="control-button" type="button" data-button="gear">Gear</button>
+            <button class="control-button" type="button" data-button="brake">Brake</button>
+            <button class="control-button" type="button" data-button="mode">Mode</button>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
