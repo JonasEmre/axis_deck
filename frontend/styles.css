@@ -35,7 +35,8 @@ button,
 canvas,
 .spring-axis,
 .gear-slot,
-.gear-knob {
+.gear-knob,
+.signal-button {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -140,7 +141,38 @@ h2 {
 }
 
 .primary-panel {
+  position: relative;
   padding: 8px;
+}
+
+.signal-controls {
+  position: absolute;
+  inset: 18px 18px auto;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.signal-button {
+  width: 56px;
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(25, 31, 38, 0.86);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 900;
+  pointer-events: auto;
+}
+
+.signal-button.active {
+  border-color: var(--warning);
+  background: var(--warning);
+  color: #15120a;
 }
 
 .panel-header {

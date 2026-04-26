@@ -23,7 +23,31 @@
         <article class="panel joystick-panel primary-panel">
           <h2 class="sr-only" id="primaryControlTitle">Steering</h2>
           <output class="sr-only" id="joystickReadout">X 0.00 / Y 0.00</output>
+          <div class="signal-controls" aria-label="Turn signals">
+            <button class="signal-button" type="button" data-button="leftSignal" aria-pressed="false" aria-label="Left signal">&larr;</button>
+            <button class="signal-button" type="button" data-button="rightSignal" aria-pressed="false" aria-label="Right signal">&rarr;</button>
+          </div>
           <canvas id="joystickCanvas" width="420" height="420" aria-label="Joystick control"></canvas>
+        </article>
+
+        <article class="panel shifter-panel">
+          <div class="shifter" id="shifter" aria-label="Five speed and reverse shifter">
+            <div class="shift-gate" aria-hidden="true"></div>
+            <button class="gear-slot" type="button" data-gear="gear1" style="--col: 1; --row: 1">1</button>
+            <button class="gear-slot" type="button" data-gear="gear2" style="--col: 1; --row: 3">2</button>
+            <button class="gear-slot" type="button" data-gear="gear3" style="--col: 2; --row: 1">3</button>
+            <button class="gear-slot" type="button" data-gear="gear4" style="--col: 2; --row: 3">4</button>
+            <button class="gear-slot" type="button" data-gear="gear5" style="--col: 3; --row: 1">5</button>
+            <button class="gear-slot" type="button" data-gear="reverse" style="--col: 3; --row: 3">R</button>
+            <div class="gear-knob" id="gearKnob" aria-hidden="true">N</div>
+          </div>
+          <output class="sr-only" id="buttonReadout">Ready</output>
+          <div class="button-grid">
+            <button class="control-button" type="button" data-button="handbrake">Handbrake</button>
+            <button class="control-button" type="button" data-button="start">Start</button>
+            <button class="control-button" type="button" data-button="lights">Lights</button>
+            <button class="control-button" type="button" data-button="horn">Horn</button>
+          </div>
         </article>
 
         <article class="panel pedals-panel">
@@ -44,26 +68,6 @@
               <div class="spring-axis-fill"></div>
               <div class="spring-axis-thumb"></div>
             </div>
-          </div>
-        </article>
-
-        <article class="panel shifter-panel">
-          <div class="shifter" id="shifter" aria-label="Five speed and reverse shifter">
-            <div class="shift-gate" aria-hidden="true"></div>
-            <button class="gear-slot" type="button" data-gear="gear1" style="--col: 1; --row: 1">1</button>
-            <button class="gear-slot" type="button" data-gear="gear2" style="--col: 1; --row: 3">2</button>
-            <button class="gear-slot" type="button" data-gear="gear3" style="--col: 2; --row: 1">3</button>
-            <button class="gear-slot" type="button" data-gear="gear4" style="--col: 2; --row: 3">4</button>
-            <button class="gear-slot" type="button" data-gear="gear5" style="--col: 3; --row: 1">5</button>
-            <button class="gear-slot" type="button" data-gear="reverse" style="--col: 3; --row: 3">R</button>
-            <div class="gear-knob" id="gearKnob" aria-hidden="true">N</div>
-          </div>
-          <output class="sr-only" id="buttonReadout">Ready</output>
-          <div class="button-grid">
-            <button class="control-button" type="button" data-button="handbrake">Handbrake</button>
-            <button class="control-button" type="button" data-button="start">Start</button>
-            <button class="control-button" type="button" data-button="lights">Lights</button>
-            <button class="control-button" type="button" data-button="horn">Horn</button>
           </div>
         </article>
       </section>

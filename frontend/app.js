@@ -8,6 +8,7 @@ const springAxisEls = [...document.querySelectorAll(".spring-axis")];
 const shifter = document.querySelector("#shifter");
 const gearSlotEls = [...document.querySelectorAll(".gear-slot")];
 const gearKnob = document.querySelector("#gearKnob");
+const signalButtonEls = [...document.querySelectorAll(".signal-button")];
 const buttonReadout = document.querySelector("#buttonReadout");
 const buttonEls = [...document.querySelectorAll(".control-button")];
 
@@ -33,6 +34,8 @@ const state = {
     start: false,
     lights: false,
     horn: false,
+    leftSignal: false,
+    rightSignal: false,
   },
 };
 
@@ -681,6 +684,18 @@ shifter.addEventListener("pointercancel", () => {
   knobPosition = { x: 0, y: 0 };
   setSelectedGear(null);
   setGearKnobOffset(0, 0);
+});
+
+signalButtonEls.forEach((button) => {
+  const buttonName = button.dataset.button;
+
+  button.addEventListener("pointerdown", (event) => {
+    button.setPointerCapture(event.pointerId);
+    state.buttons[buttonName] = !state.buttons[buttonName];
+    button.classList.toggle("active", state.buttons[buttonName]);
+    button.setAttribute("aria-pressed", String(state.buttons[buttonName]));
+    sendState();
+  });
 });
 
 springAxisEls.forEach((axisEl) => {
