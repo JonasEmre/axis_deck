@@ -14,14 +14,14 @@
           <div class="status" id="connectionStatus">Connecting</div>
           <select class="mode-select" id="controlMode" aria-label="Control mode">
             <option value="joystick">Joystick</option>
-            <option value="steering">Steering</option>
+            <option value="steering" selected>Steering</option>
           </select>
         </div>
       </header>
 
       <section class="controls" aria-label="Control deck">
         <article class="panel joystick-panel primary-panel">
-          <h2 class="sr-only" id="primaryControlTitle">Joystick</h2>
+          <h2 class="sr-only" id="primaryControlTitle">Steering</h2>
           <output class="sr-only" id="joystickReadout">X 0.00 / Y 0.00</output>
           <canvas id="joystickCanvas" width="420" height="420" aria-label="Joystick control"></canvas>
         </article>
