@@ -31,6 +31,7 @@ const state = {
     gear4: false,
     gear5: false,
     reverse: false,
+    neutral: true,
     handbrake: false,
     start: false,
     hazards: false,
@@ -446,6 +447,7 @@ controlModeEl.addEventListener("change", () => {
 
 function setSelectedGear(nextGear) {
   selectedGear = nextGear;
+  state.buttons.neutral = !selectedGear;
 
   gearSlotEls.forEach((slot) => {
     const gearName = slot.dataset.gear;
