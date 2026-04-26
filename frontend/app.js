@@ -698,12 +698,18 @@ signalButtonEls.forEach((button) => {
 
   button.addEventListener("pointerdown", (event) => {
     button.setPointerCapture(event.pointerId);
+    button.classList.add("pressed");
     setPressed(true);
   });
 
-  button.addEventListener("pointerup", () => setPressed(false));
-  button.addEventListener("pointercancel", () => setPressed(false));
-  button.addEventListener("lostpointercapture", () => setPressed(false));
+  const release = () => {
+    button.classList.remove("pressed");
+    setPressed(false);
+  };
+
+  button.addEventListener("pointerup", release);
+  button.addEventListener("pointercancel", release);
+  button.addEventListener("lostpointercapture", release);
 });
 
 springAxisEls.forEach((axisEl) => {
