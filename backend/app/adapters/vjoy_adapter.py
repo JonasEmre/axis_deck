@@ -26,7 +26,7 @@ class VJoyInputAdapter:
             "gear3": 3,
             "gear4": 4,
             "gear5": 5,
-            "gear6": 6,
+            "reverse": 6,
             "handbrake": 7,
             "start": 8,
             "lights": 9,

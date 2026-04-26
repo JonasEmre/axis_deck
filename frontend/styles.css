@@ -290,6 +290,7 @@ output {
   color: var(--text);
   font: inherit;
   font-weight: 900;
+  pointer-events: none;
 }
 
 .gear-slot.active {
@@ -314,6 +315,7 @@ output {
   place-items: center;
   font-weight: 900;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+  transform: translate(var(--knob-x, 0px), var(--knob-y, 0px));
 }
 
 .button-grid {

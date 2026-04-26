@@ -5,6 +5,7 @@ const joystickReadout = document.querySelector("#joystickReadout");
 const primaryControlTitle = document.querySelector("#primaryControlTitle");
 const pedalsReadout = document.querySelector("#pedalsReadout");
 const springAxisEls = [...document.querySelectorAll(".spring-axis")];
+const shifter = document.querySelector("#shifter");
 const gearSlotEls = [...document.querySelectorAll(".gear-slot")];
 const gearKnob = document.querySelector("#gearKnob");
 const buttonReadout = document.querySelector("#buttonReadout");
@@ -27,7 +28,7 @@ const state = {
     gear3: false,
     gear4: false,
     gear5: false,
-    gear6: false,
+    reverse: false,
     handbrake: false,
     start: false,
     lights: false,
@@ -38,6 +39,7 @@ const state = {
 const STEERING_MAX_ROTATION_DEGREES = 450;
 const STEERING_RETURN_RATE = 3.2;
 const STEERING_CENTER_EPSILON_DEGREES = 0.35;
+const SHIFTER_SLOT_SNAP_RATIO = 0.24;
 
 let socket = null;
 let reconnectTimer = null;
@@ -47,6 +49,7 @@ let steeringAngle = 0;
 let steeringLastPointerAngle = 0;
 let steeringLastSentAxis = 0;
 let selectedGear = null;
+let shifterPointerId = null;
 const springAxisPointers = new Map();
 
 function getClientId() {
@@ -401,7 +404,7 @@ controlModeEl.addEventListener("change", () => {
 });
 
 function setSelectedGear(nextGear) {
-  selectedGear = selectedGear === nextGear ? null : nextGear;
+  selectedGear = nextGear;
 
   gearSlotEls.forEach((slot) => {
     const gearName = slot.dataset.gear;
@@ -410,16 +413,107 @@ function setSelectedGear(nextGear) {
     slot.classList.toggle("active", isActive);
   });
 
-  gearKnob.textContent = selectedGear ? selectedGear.replace("gear", "") : "N";
+  gearKnob.textContent = selectedGear ? getGearLabel(selectedGear) : "N";
   buttonReadout.textContent = selectedGear ? selectedGear : "Ready";
   sendState();
 }
 
-gearSlotEls.forEach((slot) => {
-  slot.addEventListener("pointerdown", (event) => {
-    slot.setPointerCapture(event.pointerId);
-    setSelectedGear(slot.dataset.gear);
+function getGearLabel(gearName) {
+  if (gearName === "reverse") {
+    return "R";
+  }
+
+  return gearName.replace("gear", "");
+}
+
+function setGearKnobOffset(x, y) {
+  gearKnob.style.setProperty("--knob-x", `${x}px`);
+  gearKnob.style.setProperty("--knob-y", `${y}px`);
+}
+
+function getShifterCenter() {
+  const shifterRect = shifter.getBoundingClientRect();
+  const knobRect = gearKnob.getBoundingClientRect();
+
+  return {
+    x: shifterRect.left + shifterRect.width / 2,
+    y: shifterRect.top + shifterRect.height / 2,
+    knobSize: Math.min(knobRect.width, knobRect.height),
+  };
+}
+
+function getNearestGearSlot(event) {
+  const shifterRect = shifter.getBoundingClientRect();
+  const snapDistance = Math.min(shifterRect.width, shifterRect.height) * SHIFTER_SLOT_SNAP_RATIO;
+  let nearest = null;
+
+  gearSlotEls.forEach((slot) => {
+    const rect = slot.getBoundingClientRect();
+    const slotCenterX = rect.left + rect.width / 2;
+    const slotCenterY = rect.top + rect.height / 2;
+    const distance = Math.hypot(event.clientX - slotCenterX, event.clientY - slotCenterY);
+
+    if (!nearest || distance < nearest.distance) {
+      nearest = {
+        gear: slot.dataset.gear,
+        x: slotCenterX,
+        y: slotCenterY,
+        distance,
+      };
+    }
   });
+
+  return nearest && nearest.distance <= snapDistance ? nearest : null;
+}
+
+function updateShifterDrag(event) {
+  const center = getShifterCenter();
+  const shifterRect = shifter.getBoundingClientRect();
+  const maxX = shifterRect.width / 2 - center.knobSize / 2 - 10;
+  const maxY = shifterRect.height / 2 - center.knobSize / 2 - 10;
+  const offsetX = clamp(event.clientX - center.x, -maxX, maxX);
+  const offsetY = clamp(event.clientY - center.y, -maxY, maxY);
+
+  setGearKnobOffset(offsetX, offsetY);
+}
+
+function releaseShifter(event) {
+  shifterPointerId = null;
+  const nearest = getNearestGearSlot(event);
+
+  if (!nearest) {
+    setSelectedGear(null);
+    setGearKnobOffset(0, 0);
+    return;
+  }
+
+  const center = getShifterCenter();
+  setSelectedGear(nearest.gear);
+  setGearKnobOffset(nearest.x - center.x, nearest.y - center.y);
+}
+
+shifter.addEventListener("pointerdown", (event) => {
+  shifterPointerId = event.pointerId;
+  shifter.setPointerCapture(event.pointerId);
+  updateShifterDrag(event);
+});
+
+shifter.addEventListener("pointermove", (event) => {
+  if (event.pointerId === shifterPointerId) {
+    updateShifterDrag(event);
+  }
+});
+
+shifter.addEventListener("pointerup", (event) => {
+  if (event.pointerId === shifterPointerId) {
+    releaseShifter(event);
+  }
+});
+
+shifter.addEventListener("pointercancel", () => {
+  shifterPointerId = null;
+  setSelectedGear(null);
+  setGearKnobOffset(0, 0);
 });
 
 springAxisEls.forEach((axisEl) => {

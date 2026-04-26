@@ -88,7 +88,7 @@ Beklenen mapping:
 - Clutch -> vJoy Slider 0
 - Throttle -> vJoy Z Axis
 - Brake -> vJoy Rz Axis
-- Gear 1-6 -> vJoy Button 1-6
+- Gear 1-5 + Reverse -> vJoy Button 1-6
 - Handbrake/Start/Lights/Horn -> vJoy Button 7-10
 
 vJoy Config içinde Device 1 için `X`, `Y`, `Z`, `Rz`, `Slider 0` ve en az `10` button aktif olmalı.
