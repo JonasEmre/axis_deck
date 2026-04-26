@@ -261,19 +261,22 @@ output {
 }
 
 .shift-gate::before {
-  left: 12%;
-  right: 12%;
+  left: 10%;
+  right: 10%;
   top: 50%;
-  height: 5px;
+  height: 12px;
+  border-radius: 999px;
   transform: translateY(-50%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .shift-gate::after {
   inset: 10% 0;
   background:
-    linear-gradient(90deg, transparent calc(16.66% - 2px), #34404c calc(16.66% - 2px), #34404c calc(16.66% + 3px), transparent calc(16.66% + 3px)),
-    linear-gradient(90deg, transparent calc(50% - 2px), #34404c calc(50% - 2px), #34404c calc(50% + 3px), transparent calc(50% + 3px)),
-    linear-gradient(90deg, transparent calc(83.33% - 2px), #34404c calc(83.33% - 2px), #34404c calc(83.33% + 3px), transparent calc(83.33% + 3px));
+    linear-gradient(90deg, transparent calc(16.66% - 6px), #34404c calc(16.66% - 6px), #34404c calc(16.66% + 6px), transparent calc(16.66% + 6px)),
+    linear-gradient(90deg, transparent calc(50% - 6px), #34404c calc(50% - 6px), #34404c calc(50% + 6px), transparent calc(50% + 6px)),
+    linear-gradient(90deg, transparent calc(83.33% - 6px), #34404c calc(83.33% - 6px), #34404c calc(83.33% + 6px), transparent calc(83.33% + 6px));
+  border-radius: 999px;
 }
 
 .gear-slot {

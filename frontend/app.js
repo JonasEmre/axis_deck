@@ -40,6 +40,7 @@ const STEERING_MAX_ROTATION_DEGREES = 450;
 const STEERING_RETURN_RATE = 3.2;
 const STEERING_CENTER_EPSILON_DEGREES = 0.35;
 const SHIFTER_SLOT_SNAP_RATIO = 0.24;
+const SHIFTER_COLUMN_SWITCH_RATIO = 0.16;
 
 let socket = null;
 let reconnectTimer = null;
@@ -442,44 +443,93 @@ function getShifterCenter() {
   };
 }
 
-function getNearestGearSlot(event) {
-  const shifterRect = shifter.getBoundingClientRect();
-  const snapDistance = Math.min(shifterRect.width, shifterRect.height) * SHIFTER_SLOT_SNAP_RATIO;
-  let nearest = null;
-
-  gearSlotEls.forEach((slot) => {
+function getGearSlots() {
+  return gearSlotEls.map((slot) => {
     const rect = slot.getBoundingClientRect();
-    const slotCenterX = rect.left + rect.width / 2;
-    const slotCenterY = rect.top + rect.height / 2;
-    const distance = Math.hypot(event.clientX - slotCenterX, event.clientY - slotCenterY);
 
-    if (!nearest || distance < nearest.distance) {
-      nearest = {
-        gear: slot.dataset.gear,
-        x: slotCenterX,
-        y: slotCenterY,
-        distance,
-      };
+    return {
+      gear: slot.dataset.gear,
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+  });
+}
+
+function getShifterColumns() {
+  const columns = [];
+
+  getGearSlots().forEach((slot) => {
+    if (!columns.some((column) => Math.abs(column - slot.x) < 1)) {
+      columns.push(slot.x);
     }
   });
+
+  return columns.sort((a, b) => a - b);
+}
+
+function getNearestColumn(x) {
+  return getShifterColumns().reduce((nearest, column) => {
+    return Math.abs(column - x) < Math.abs(nearest - x) ? column : nearest;
+  });
+}
+
+function getShifterPathPoint(event) {
+  const center = getShifterCenter();
+  const shifterRect = shifter.getBoundingClientRect();
+  const columns = getShifterColumns();
+  const horizontalMin = columns[0];
+  const horizontalMax = columns[columns.length - 1];
+  const rawX = clamp(event.clientX, horizontalMin, horizontalMax);
+  const nearestColumn = getNearestColumn(rawX);
+  const columnSwitchDistance = shifterRect.width * SHIFTER_COLUMN_SWITCH_RATIO;
+  const isOnColumn = Math.abs(rawX - nearestColumn) <= columnSwitchDistance;
+
+  if (!isOnColumn) {
+    return {
+      x: rawX,
+      y: center.y,
+    };
+  }
+
+  const columnSlots = getGearSlots().filter((slot) => Math.abs(slot.x - nearestColumn) < 1);
+  const minY = Math.min(...columnSlots.map((slot) => slot.y));
+  const maxY = Math.max(...columnSlots.map((slot) => slot.y));
+
+  return {
+    x: nearestColumn,
+    y: clamp(event.clientY, minY, maxY),
+  };
+}
+
+function getNearestGearSlot(point) {
+  const shifterRect = shifter.getBoundingClientRect();
+  const snapDistance = Math.min(shifterRect.width, shifterRect.height) * SHIFTER_SLOT_SNAP_RATIO;
+  const nearest = getGearSlots().reduce((current, slot) => {
+    const distance = Math.hypot(point.x - slot.x, point.y - slot.y);
+
+    if (!current || distance < current.distance) {
+      return { ...slot, distance };
+    }
+
+    return current;
+  }, null);
 
   return nearest && nearest.distance <= snapDistance ? nearest : null;
 }
 
 function updateShifterDrag(event) {
   const center = getShifterCenter();
-  const shifterRect = shifter.getBoundingClientRect();
-  const maxX = shifterRect.width / 2 - center.knobSize / 2 - 10;
-  const maxY = shifterRect.height / 2 - center.knobSize / 2 - 10;
-  const offsetX = clamp(event.clientX - center.x, -maxX, maxX);
-  const offsetY = clamp(event.clientY - center.y, -maxY, maxY);
+  const pathPoint = getShifterPathPoint(event);
+  const offsetX = pathPoint.x - center.x;
+  const offsetY = pathPoint.y - center.y;
 
   setGearKnobOffset(offsetX, offsetY);
 }
 
 function releaseShifter(event) {
   shifterPointerId = null;
-  const nearest = getNearestGearSlot(event);
+  const pathPoint = getShifterPathPoint(event);
+  const nearest = getNearestGearSlot(pathPoint);
 
   if (!nearest) {
     setSelectedGear(null);
