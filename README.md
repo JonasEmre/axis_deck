@@ -63,6 +63,28 @@ ipconfig
 
 ## Sonraki Adımlar
 
-- Keyboard/pynput adapter eklemek.
-- vJoy/pyvjoy adapter ile gerçek analog axis emülasyonu yapmak.
+- vJoy'u Windows'ta aktif edip `AXISDECK_INPUT_ADAPTER=vjoy` ile gerçek analog axis emülasyonunu test etmek.
 - Oyun preset yapısını tasarlamak.
+
+## vJoy Test Modu
+
+vJoy Device 1 aktifse backend'i vJoy adapter ile başlat:
+
+```powershell
+$env:AXISDECK_INPUT_ADAPTER="vjoy"
+.\.venv\Scripts\uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Windows test panelini aç:
+
+```powershell
+joy.cpl
+```
+
+Beklenen mapping:
+
+- Steering/joystick X -> vJoy X Axis
+- Joystick Y -> vJoy Y Axis
+- Throttle -> vJoy Z Axis
+- Brake -> vJoy Rz Axis
+- Fire/Gear/Boost/Mode -> vJoy Button 1-4
