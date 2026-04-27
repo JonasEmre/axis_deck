@@ -7,9 +7,137 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <main class="shell">
+    <div id="appRoot"></div>
+
+    <template id="moduleChooserTemplate">
+      <main class="shell module-shell">
+        <section class="module-picker" aria-label="AxisDeck modules">
+          <div class="module-picker-header">
+            <p class="module-kicker">AxisDeck</p>
+            <h1>Modules</h1>
+          </div>
+          <div class="module-grid">
+            <button class="module-card ready" type="button" data-module="steering">
+              <span class="module-card-title">Steering</span>
+              <span class="module-card-meta">Ready</span>
+            </button>
+            <button class="module-card upcoming" type="button" data-module="ksp">
+              <span class="module-card-title">Kerbal Space Program</span>
+              <span class="module-card-meta">Telemetry coming soon</span>
+            </button>
+          </div>
+        </section>
+      </main>
+    </template>
+
+    <template id="kspTemplate">
+      <main class="shell ksp-shell">
+        <header class="ksp-topbar">
+          <button class="topbar-button" type="button" data-action="show-modules">Modules</button>
+          <div class="ksp-status-row" aria-label="KSP status">
+            <div class="status" id="kspConnectionStatus">Connecting</div>
+            <div class="ksp-vessel-name" id="kspVesselName">AxisDeck Demo Vessel</div>
+          </div>
+        </header>
+
+        <section class="ksp-flight-deck" aria-label="Kerbal Space Program control panel">
+          <section class="ksp-action-strip" aria-label="Flight toggles">
+            <button class="ksp-toggle" type="button" data-button="lights" aria-pressed="false">Lights</button>
+            <button class="ksp-toggle" type="button" data-button="gear" aria-pressed="false">Gear</button>
+          </section>
+
+          <section class="ksp-readouts" aria-label="Flight readouts">
+            <div class="ksp-readout">
+              <span>Speed:</span>
+              <strong id="kspSpeedText">0.0 m/s</strong>
+            </div>
+            <div class="ksp-readout">
+              <span>Alt:</span>
+              <strong id="kspAltitudeText">0 m</strong>
+            </div>
+            <div class="ksp-readout">
+              <span>AP:</span>
+              <strong id="kspApoapsisText">--:--</strong>
+            </div>
+            <div class="ksp-readout">
+              <span>PE:</span>
+              <strong id="kspPeriapsisText">--:--</strong>
+            </div>
+          </section>
+
+          <section class="ksp-gauge-grid" aria-label="Telemetry gauges">
+            <div class="ksp-gauge" data-gauge="solidFuel">
+              <canvas width="260" height="150" aria-label="Solid fuel gauge"></canvas>
+              <span>Solid Fuel</span>
+            </div>
+            <div class="ksp-gauge" data-gauge="liquidFuel">
+              <canvas width="260" height="150" aria-label="Liquid fuel gauge"></canvas>
+              <span>Liquid Fuel</span>
+            </div>
+            <div class="ksp-gauge" data-gauge="oxidizer">
+              <canvas width="260" height="150" aria-label="Oxidizer gauge"></canvas>
+              <span>Oxidizer</span>
+            </div>
+            <div class="ksp-gauge" data-gauge="monoPropellant">
+              <canvas width="260" height="150" aria-label="Monopropellant gauge"></canvas>
+              <span>MonoProp</span>
+            </div>
+            <div class="ksp-gauge" data-gauge="electricCharge">
+              <canvas width="260" height="150" aria-label="Battery gauge"></canvas>
+              <span>Battery</span>
+            </div>
+            <div class="ksp-gauge" data-gauge="intakeAir">
+              <canvas width="260" height="150" aria-label="Intake air gauge"></canvas>
+              <span>Intake Air</span>
+            </div>
+            <div class="ksp-gauge" data-gauge="gForce">
+              <canvas width="260" height="150" aria-label="G force gauge"></canvas>
+              <span>G Force</span>
+            </div>
+            <div class="ksp-gauge" data-gauge="verticalSpeed">
+              <canvas width="260" height="150" aria-label="Vertical speed gauge"></canvas>
+              <span>V Speed</span>
+            </div>
+          </section>
+
+          <section class="ksp-control-zone" aria-label="Flight controls">
+            <article class="ksp-stick-panel ksp-stick-panel-with-throttle">
+              <div class="ksp-stick-main">
+                <label for="kspRollSlider">Roll</label>
+                <input id="kspRollSlider" class="ksp-horizontal-range ksp-fat-range ksp-range-bipolar ksp-range-bipolar-horizontal" type="range" min="-100" max="100" value="0" />
+                <canvas id="kspPitchYawPad" width="320" height="320" aria-label="Pitch and yaw joystick"></canvas>
+                <span>Pitch / Yaw</span>
+              </div>
+              <div class="ksp-slider-panel ksp-slider-panel-vertical">
+                <label for="kspThrottleSlider">Throttle</label>
+                <input id="kspThrottleSlider" class="ksp-vertical-range ksp-fat-range ksp-range-throttle" type="range" min="0" max="100" value="0" />
+                <output id="kspThrottleOutput">0%</output>
+              </div>
+            </article>
+            <article class="ksp-center-switches" aria-label="Flight assist toggles">
+              <button class="ksp-toggle" type="button" data-button="rcs" aria-pressed="false">RCS</button>
+              <button class="ksp-toggle" type="button" data-button="sas" aria-pressed="false">SAS</button>
+            </article>
+            <article class="ksp-stick-panel ksp-stick-panel-with-translate">
+              <div class="ksp-slider-panel ksp-slider-panel-vertical">
+                <label for="kspTranslateForwardSlider">FWD/BCK</label>
+                <input id="kspTranslateForwardSlider" class="ksp-vertical-range ksp-fat-range ksp-range-bipolar ksp-range-bipolar-vertical" type="range" min="-100" max="100" value="0" />
+                <output id="kspTranslateForwardOutput">0%</output>
+              </div>
+              <div class="ksp-stick-main">
+                <canvas id="kspTranslatePad" width="320" height="320" aria-label="Translate joystick"></canvas>
+                <span>Translate</span>
+              </div>
+            </article>
+          </section>
+        </section>
+      </main>
+    </template>
+
+    <template id="steeringTemplate">
+<main class="shell">
       <header class="topbar">
-        <div class="topbar-spacer" aria-hidden="true"></div>
+        <div class="topbar-leading"><button class="topbar-button" type="button" data-action="show-modules">Modules</button></div>
         <div class="topbar-actions">
           <div class="status" id="connectionStatus">Connecting</div>
           <button class="topbar-button" type="button" data-button="start">Start</button>
@@ -68,10 +196,6 @@
               </label>
             </div>
           </div>
-          <select class="mode-select" id="controlMode" aria-label="Control mode">
-            <option value="joystick">Joystick</option>
-            <option value="steering" selected>Steering</option>
-          </select>
         </div>
       </header>
 
@@ -133,7 +257,8 @@
         </article>
       </section>
     </main>
+    </template>
 
-    <script src="/static/app.js"></script>
+    <script type="module" src="/static/app.js"></script>
   </body>
 </html>

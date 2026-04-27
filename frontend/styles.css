@@ -10,6 +10,9 @@
   --accent-strong: #2bbf98;
   --danger: #ff6b6b;
   --warning: #f2c94c;
+  --control-knob: #2a94d5;
+  --ecam-green: #32ff55;
+  --ecam-red: #ff3333;
 }
 
 * {
@@ -65,7 +68,8 @@ canvas,
   min-height: 44px;
 }
 
-.topbar-spacer {
+.topbar-spacer,
+.topbar-leading {
   flex: 1;
   min-width: 0;
 }
@@ -173,24 +177,12 @@ h2 {
   color: #06110e;
 }
 
-.mode-select {
-  min-width: 132px;
-  padding: 10px 34px 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: 18px;
-  font-weight: 700;
-}
-
 .status.connected {
-  color: var(--accent);
+  color: var(--control-knob);
 }
 
 .status.disconnected {
-  color: var(--danger);
+  color: var(--ecam-red);
 }
 
 .controls {
@@ -250,6 +242,445 @@ output {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.module-shell {
+  justify-content: center;
+}
+
+.module-picker {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+}
+
+.module-picker-header {
+  display: grid;
+  gap: 4px;
+}
+
+.module-kicker {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.module-picker h1,
+.placeholder-module h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 8vh, 4.8rem);
+  line-height: 0.95;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.module-card {
+  min-height: min(38vh, 280px);
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.module-card.ready {
+  border-color: rgba(79, 209, 177, 0.68);
+}
+
+.module-card.upcoming {
+  background: #151b22;
+}
+
+.module-card-title {
+  font-size: clamp(1.55rem, 5vh, 3.2rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.module-card-meta {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.module-card.ready .module-card-meta {
+  color: var(--accent);
+}
+
+.module-topbar {
+  position: fixed;
+  top: max(18px, env(safe-area-inset-top));
+  left: max(18px, env(safe-area-inset-left));
+  z-index: 3;
+}
+
+.placeholder-module {
+  width: min(760px, 100%);
+  margin: auto;
+  display: grid;
+  gap: 14px;
+}
+
+.placeholder-module p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+.ksp-shell {
+  gap: 10px;
+  background: #000;
+}
+
+.ksp-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+}
+
+.ksp-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ksp-vessel-name {
+  min-width: min(34vw, 420px);
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #d9fff5;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ksp-flight-deck {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(360px, 1.44fr) minmax(260px, 0.78fr);
+  grid-template-rows: auto clamp(168px, 26vh, 240px) minmax(250px, 1fr);
+  gap: 10px;
+}
+
+.ksp-action-strip,
+.ksp-readouts,
+.ksp-gauge-grid,
+.ksp-control-zone,
+.ksp-stick-panel {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ksp-action-strip {
+  grid-column: 1 / 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+
+.ksp-toggle {
+  min-height: 58px;
+  border: 1px solid #6f777d;
+  border-radius: 8px;
+  background: #000;
+  color: #e8f6f2;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.ksp-toggle.active {
+  border-color: var(--ecam-green);
+  background: #2bbf98;
+  color: #06110e;
+}
+
+.ksp-readouts {
+  grid-column: 2 / 4;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  justify-content: end;
+  align-content: start;
+  gap: 4px 28px;
+  overflow: hidden;
+}
+
+.ksp-readout {
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ksp-readout span {
+  color: #f4f6f2;
+  font-size: clamp(0.9rem, 1.25vw, 1.2rem);
+  font-weight: 900;
+}
+
+.ksp-readout strong {
+  color: var(--ecam-green);
+  font-size: clamp(0.9rem, 1.25vw, 1.2rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ksp-gauge-grid {
+  grid-column: 1 / 4;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 1px;
+  min-height: clamp(168px, 26vh, 240px);
+  overflow: visible;
+}
+
+.ksp-gauge {
+  min-width: 0;
+  min-height: 0;
+  padding: 6px 8px 8px;
+  background: transparent;
+  display: grid;
+  grid-template-rows: minmax(126px, 1fr) auto;
+  align-items: center;
+}
+
+.ksp-gauge canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 13 / 9;
+  max-height: 100%;
+  display: block;
+}
+
+.ksp-gauge span {
+  color: #d9fff5;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ksp-control-zone {
+  grid-column: 1 / 4;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(136px, 0.22fr) minmax(0, 1fr);
+  gap: 14px;
+  padding: 0;
+  background: transparent;
+}
+
+.ksp-stick-panel,
+.ksp-slider-panel,
+.ksp-center-switches {
+  min-height: 0;
+  padding: 6px;
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.ksp-stick-panel {
+  border: 1px solid #6f777d;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.ksp-stick-panel-with-throttle {
+  grid-template-columns: minmax(0, 1fr) 84px;
+  gap: 6px;
+}
+
+.ksp-stick-panel-with-translate {
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.ksp-stick-main {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  justify-items: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.ksp-stick-panel canvas {
+  width: min(100%, 34vh);
+  width: min(100%, 34dvh);
+  max-height: 100%;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  display: block;
+}
+
+.ksp-stick-panel span,
+.ksp-stick-panel label,
+.ksp-slider-panel label,
+.ksp-slider-panel output {
+  color: #d9fff5;
+  font-weight: 900;
+  text-align: center;
+}
+
+.ksp-slider-panel {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 0;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ksp-slider-panel-vertical {
+  min-height: 0;
+}
+
+.ksp-vertical-range {
+  width: 38px;
+  height: 100%;
+  min-height: 210px;
+  max-height: 100%;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  justify-self: center;
+}
+
+.ksp-horizontal-range {
+  width: min(100%, 260px);
+  justify-self: center;
+}
+
+.ksp-fat-range {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  accent-color: var(--control-knob);
+  --fill-value: 0%;
+  --fill-positive: 0%;
+  --fill-negative: 0%;
+  --slider-track-bg: #000;
+}
+
+.ksp-horizontal-range {
+  height: 38px;
+}
+
+.ksp-fat-range::-webkit-slider-runnable-track {
+  height: 18px;
+  border: 1px solid #6f777d;
+  border-radius: 999px;
+  background: var(--slider-track-bg);
+}
+
+.ksp-fat-range::-webkit-slider-thumb {
+  width: 34px;
+  height: 34px;
+  margin-top: -9px;
+  border: 2px solid #d9fff5;
+  border-radius: 50%;
+  background: var(--control-knob);
+  -webkit-appearance: none;
+}
+
+.ksp-vertical-range::-webkit-slider-runnable-track {
+  width: 18px;
+  height: 100%;
+}
+
+.ksp-vertical-range::-webkit-slider-thumb {
+  margin-top: 0;
+  margin-left: -9px;
+}
+
+.ksp-fat-range::-moz-range-track {
+  height: 18px;
+  border: 1px solid #6f777d;
+  border-radius: 999px;
+  background: var(--slider-track-bg);
+}
+
+.ksp-fat-range::-moz-range-thumb {
+  width: 34px;
+  height: 34px;
+  border: 2px solid #d9fff5;
+  border-radius: 50%;
+  background: var(--control-knob);
+}
+
+.ksp-vertical-range::-moz-range-track {
+  width: 18px;
+  height: 100%;
+}
+
+.ksp-range-throttle {
+  --slider-track-bg: linear-gradient(to top, var(--ecam-green) 0 var(--fill-value), #000 var(--fill-value) 100%);
+}
+
+.ksp-range-bipolar-horizontal {
+  --slider-track-bg: linear-gradient(
+    to right,
+    #000 0 calc(50% - var(--fill-negative)),
+    var(--ecam-red) calc(50% - var(--fill-negative)) 50%,
+    var(--ecam-green) 50% calc(50% + var(--fill-positive)),
+    #000 calc(50% + var(--fill-positive)) 100%
+  );
+}
+
+.ksp-range-bipolar-vertical {
+  --slider-track-bg: linear-gradient(
+    to top,
+    #000 0 calc(50% - var(--fill-negative)),
+    var(--ecam-red) calc(50% - var(--fill-negative)) 50%,
+    var(--ecam-green) 50% calc(50% + var(--fill-positive)),
+    #000 calc(50% + var(--fill-positive)) 100%
+  );
+}
+
+.ksp-center-switches {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: center;
+  gap: 10px;
+}
+
+#kspThrottleOutput,
+#kspTranslateForwardOutput {
+  align-self: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
 }
 
 #joystickCanvas {
@@ -539,7 +970,8 @@ output {
     align-items: stretch;
   }
 
-  .topbar-spacer {
+  .topbar-spacer,
+  .topbar-leading {
     display: none;
   }
 
@@ -548,10 +980,17 @@ output {
   }
 
   .status,
-  .mode-select,
   .topbar-button {
     flex: 1;
     min-width: 0;
+  }
+
+  .module-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .module-card {
+    min-height: 180px;
   }
 
   .settings-menu {
@@ -564,6 +1003,59 @@ output {
 
   .controls {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ksp-topbar {
+    align-items: stretch;
+  }
+
+  .ksp-status-row {
+    flex: 1;
+  }
+
+  .ksp-vessel-name {
+    display: none;
+  }
+
+  .ksp-flight-deck {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(250px, 1fr) auto;
+    overflow: auto;
+    touch-action: pan-y;
+  }
+
+  .ksp-action-strip,
+  .ksp-readouts,
+  .ksp-gauge-grid,
+  .ksp-control-zone {
+    grid-column: 1 / 2;
+  }
+
+  .ksp-action-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .ksp-toggle {
+    min-height: 52px;
+  }
+
+  .ksp-readouts {
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: start;
+  }
+
+  .ksp-gauge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 560px;
+  }
+
+  .ksp-control-zone {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ksp-stick-panel canvas {
+    width: min(100%, 46vh);
+    width: min(100%, 46dvh);
   }
 
   #joystickCanvas {
