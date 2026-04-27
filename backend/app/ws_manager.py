@@ -18,13 +18,3 @@ class WebSocketManager:
         await websocket.accept()
         connection = ClientConnection(id=str(uuid4()), websocket=websocket)
         self._connections[connection.id] = connection
-        print(f"[ws] connected id={connection.id} active={len(self._connections)}", flush=True)
-        return connection
-
-    def disconnect(self, connection_id: str) -> None:
-        self._connections.pop(connection_id, None)
-        print(f"[ws] disconnected id={connection_id} active={len(self._connections)}", flush=True)
-
-    @property
-    def active_count(self) -> int:
-        return len(self._connections)

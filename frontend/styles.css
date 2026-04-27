@@ -22,6 +22,7 @@ body {
   margin: 0;
   overflow: hidden;
   overscroll-behavior: none;
+  touch-action: none;
 }
 
 body {
@@ -39,7 +40,7 @@ canvas,
 .spring-axis,
 .gear-slot,
 .gear-knob,
-.signal-button,
+.control-button,
 .topbar-button {
   touch-action: none;
   user-select: none;
@@ -127,7 +128,7 @@ h2 {
   top: calc(100% + 10px);
   right: 0;
   z-index: 8;
-  width: 260px;
+  width: 280px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
@@ -162,6 +163,7 @@ h2 {
   background: #121820;
   color: var(--text);
   font: inherit;
+  font-size: 18px;
   font-weight: 800;
 }
 
@@ -179,6 +181,7 @@ h2 {
   background: var(--surface);
   color: var(--text);
   font: inherit;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -235,37 +238,6 @@ h2 {
   padding: 4px;
 }
 
-.signal-controls {
-  position: absolute;
-  inset: 14px 14px auto;
-  z-index: 3;
-  display: flex;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.signal-button {
-  width: 56px;
-  aspect-ratio: 1;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: rgba(25, 31, 38, 0.86);
-  color: var(--muted);
-  display: grid;
-  place-items: center;
-  font: inherit;
-  font-size: 1.5rem;
-  font-weight: 900;
-  pointer-events: auto;
-}
-
-.signal-button.pressed,
-.signal-button:active {
-  border-color: var(--accent);
-  background: var(--accent-strong);
-  color: #06110e;
-}
-
 .panel-header {
   display: flex;
   align-items: center;
@@ -281,13 +253,32 @@ output {
 }
 
 #joystickCanvas {
-  width: 100%;
-  max-height: calc(100vh - 92px);
+  width: min(100%, calc(100vh - 92px));
+  width: min(100%, calc(100dvh - 92px));
+  height: auto;
   aspect-ratio: 1;
+  align-self: center;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #121820;
   display: block;
+}
+
+.wheel-controls {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2fr 3fr 2fr;
+  gap: 12px;
+  padding: 0 6px 6px;
+}
+
+.wheel-button {
+  width: 100%;
+  min-height: 68px;
+}
+
+.horn-button {
+  min-height: 76px;
 }
 
 .pedals-panel {
@@ -364,7 +355,7 @@ output {
   flex: 1;
   min-height: 260px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--gear-columns, 3), minmax(0, 1fr));
   grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 10px;
   border: 1px solid var(--line);
@@ -377,18 +368,24 @@ output {
   position: absolute;
   inset: 6px;
   pointer-events: none;
+  display: grid;
+  grid-template-columns: repeat(var(--gear-columns, 3), minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
 }
 
-.shift-gate::before,
-.shift-gate::after {
+.shifter.direct .shift-gate {
+  display: none;
+}
+
+.shift-gate::before {
   content: "";
   position: absolute;
   background: #34404c;
 }
 
 .shift-gate::before {
-  left: calc(16.66% - 1px);
-  right: calc(16.66% - 1px);
+  left: calc((100% / var(--gear-columns, 3)) / 2 - 1px);
+  right: calc((100% / var(--gear-columns, 3)) / 2 - 1px);
   top: 50%;
   height: 14px;
   border-radius: 999px;
@@ -396,12 +393,13 @@ output {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-.shift-gate::after {
-  inset: 16.66% 0;
-  background:
-    linear-gradient(90deg, transparent calc(16.66% - 7px), #34404c calc(16.66% - 7px), #34404c calc(16.66% + 7px), transparent calc(16.66% + 7px)),
-    linear-gradient(90deg, transparent calc(50% - 7px), #34404c calc(50% - 7px), #34404c calc(50% + 7px), transparent calc(50% + 7px)),
-    linear-gradient(90deg, transparent calc(83.33% - 7px), #34404c calc(83.33% - 7px), #34404c calc(83.33% + 7px), transparent calc(83.33% + 7px));
+.gate-stem {
+  z-index: 1;
+  grid-row: 1 / 4;
+  justify-self: center;
+  width: 14px;
+  margin-block: calc(100% / 6);
+  background: #34404c;
   border-radius: 999px;
 }
 
@@ -422,6 +420,10 @@ output {
   pointer-events: none;
 }
 
+.shifter.direct .gear-slot {
+  pointer-events: auto;
+}
+
 .gear-slot.active {
   border-color: var(--accent);
   background: var(--accent-strong);
@@ -429,11 +431,10 @@ output {
 }
 
 .gear-knob {
+  position: absolute;
   z-index: 2;
-  grid-column: 2;
-  grid-row: 2;
-  justify-self: center;
-  align-self: center;
+  left: 50%;
+  top: 50%;
   width: min(76px, 76%);
   aspect-ratio: 1;
   border: 1px solid rgba(255, 255, 255, 0.35);
@@ -444,12 +445,71 @@ output {
   place-items: center;
   font-weight: 900;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
-  transform: translate(var(--knob-x, 0px), var(--knob-y, 0px));
+  transform: translate(calc(-50% + var(--knob-x, 0px)), calc(-50% + var(--knob-y, 0px)));
+}
+
+.shifter.direct .gear-knob {
+  display: none;
+}
+
+.truck-toggles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.truck-toggles[hidden] {
+  display: none;
+}
+
+.truck-toggle-group {
+  display: grid;
+}
+
+.truck-toggle {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font: inherit;
+  font-weight: 900;
+}
+
+.truck-toggle.active {
+  border-color: var(--accent);
+  background: var(--accent-strong);
+  color: #06110e;
+}
+
+.reverse-toggle-wrap {
+  display: grid;
+}
+
+.reverse-toggle-wrap[hidden] {
+  display: none;
+}
+
+.reverse-toggle {
+  min-height: 56px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.45rem;
+  font-weight: 900;
+}
+
+.reverse-toggle.active {
+  border-color: var(--accent);
+  background: var(--accent-strong);
+  color: #06110e;
 }
 
 .button-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -507,7 +567,8 @@ output {
   }
 
   #joystickCanvas {
-    max-height: 52vh;
+    width: min(100%, 52vh);
+    width: min(100%, 52dvh);
   }
 
   .pedals-panel {

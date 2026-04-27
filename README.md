@@ -13,20 +13,57 @@ python -m venv .venv
 ## Çalıştırma
 
 ```powershell
-.\.venv\Scripts\uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+.\start.ps1
+```
+
+PowerShell script policy hata verirse aynı komutu CMD wrapper ile çalıştır:
+
+```powershell
+.\start.cmd
 ```
 
 PC üzerinde:
 
 ```text
-http://localhost:8000
+http://127.0.0.1:<port>
 ```
 
 Aynı Wi-Fi ağındaki tablet üzerinde:
 
 ```text
-http://<pc-ip>:8000
+http://<pc-ip>:<port>
 ```
+
+`start.ps1` varsayılan olarak vJoy adapter ile başlar. `8000` doluysa otomatik olarak `8001`, `8002` gibi ilk boş portu seçer ve konsola doğru PC/tablet adreslerini yazar.
+
+Varsayılan çalıştırma tek server süreci açar. Kod değişikliklerini otomatik yeniden yükleyen geliştirme modu istersen:
+
+```powershell
+.\start.ps1 -Reload
+```
+
+Sadece log/test modunda çalıştırmak için:
+
+```powershell
+.\start.ps1 -Adapter log
+```
+
+Settings içindeki `Game` seçimi oyun bazlı gelecek ayarlar için kullanılır; `Motor Town` ve `BeamNG.drive` ayrımı şimdiden korunur.
+
+`Gearbox Output` vites button davranışını belirler:
+
+- `Hold`: Vites button'u seçili viteste basılı kalır; sürüş için varsayılan moddur.
+- `Pulse`: Vites button'u kısa pulse edilir ve sonra bırakılır; BeamNG bind ayarı yaparken kullanılabilir.
+
+`Hold` modda direkt vites-vites geçişlerinde eski vites bırakılır, kısa bir boş aralık gönderilir ve sonra yeni vites basılır. Bu, BeamNG gibi geçiş sırasına hassas oyunlarda sürüş sırasında vites değişimini daha güvenilir yapar.
+
+`Steering Feel` direksiyonun parmak hareketine tepkisini belirler:
+
+- `Direct`: Parmak hareketi direksiyon açısına doğrudan uygulanır.
+- `Smooth`: Hedef açıya yumuşak yaklaşır, hızlı savrulmayı azaltır.
+- `Heavy`: Daha yavaş ve dirençli his verir; yüksek hız hissi için daha kontrollüdür.
+
+Gaz, fren ve debriyaj pedalları hedef değeri parmak altında hemen gösterir; oyuna gönderilen axis değeri ise kısa bir smoothing ile hedefe yaklaşır.
 
 Windows IP adresini görmek için:
 
@@ -71,8 +108,13 @@ ipconfig
 vJoy Device 1 aktifse backend'i vJoy adapter ile başlat:
 
 ```powershell
-$env:AXISDECK_INPUT_ADAPTER="vjoy"
-.\.venv\Scripts\uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+.\start.ps1
+```
+
+Farklı vJoy device ID kullanmak için:
+
+```powershell
+.\start.ps1 -VJoyDeviceId 2
 ```
 
 Windows test panelini aç:
@@ -88,10 +130,20 @@ Beklenen mapping:
 - Clutch -> vJoy Slider 0
 - Throttle -> vJoy Z Axis
 - Brake -> vJoy Rz Axis
-- Gear 1-5 + Reverse -> vJoy Button 1-6
-- Handbrake/Start/Lights/Horn -> vJoy Button 7-10
-- Left/Right signal -> vJoy Button 11-12
-- Hazards -> vJoy Button 13
-- Neutral -> vJoy Button 14
+- Neutral -> vJoy Button 1 (oyunda/monitorlerde Button 0 olarak gorunebilir)
+- Gear 1-6 -> vJoy Button 2-7
+- Truck 5L/5H/6L/6H/7L/7H/8L/8H -> vJoy Button 8-15
+- Reverse -> vJoy Button 16
+- Truck R1/R2/L -> vJoy Button 17-19
+- Handbrake/Start/Lights/Horn -> vJoy Button 20-23
+- Left/Right signal -> vJoy Button 24-25
+- Hazards -> vJoy Button 26
 
-vJoy Config içinde Device 1 için `X`, `Y`, `Z`, `Rz`, `Slider 0` ve en az `14` button aktif olmalı.
+vJoy Config içinde Device 1 için `X`, `Y`, `Z`, `Rz`, `Slider 0` ve en az `26` button aktif olmalı.
+
+Gearbox Type ayarları:
+
+- `5 Speed`: Varsayılan 1-5 + R H vites düzeni.
+- `6 Speed`: 1-6 H vites düzeni; reverse ayrı büyük `R` toggle ile seçilir.
+- `Truck H Range/Splitter`: H slotları + tek `Range` ve tek `Splitter` toggle ile final vitesi gönderir.
+- `Truck Direct`: R2, R1, L, 1, 2, 3, 4, 5L-8H sonucunu direkt seçtirir; vJoy'a final vites button'u gönderilir.

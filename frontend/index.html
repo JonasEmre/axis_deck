@@ -29,10 +29,41 @@
                 <input id="steeringReturnCustom" type="range" min="1.2" max="4.2" step="0.1" value="1.6" disabled />
               </label>
               <label class="settings-field">
+                <span>Steering Feel</span>
+                <select id="steeringFeel" aria-label="Steering feel">
+                  <option value="direct" selected>Direct</option>
+                  <option value="smooth">Smooth</option>
+                  <option value="heavy">Heavy</option>
+                </select>
+              </label>
+              <label class="settings-field">
+                <span>Game</span>
+                <select id="gameProfile" aria-label="Game profile">
+                  <option value="motor-town" selected>Motor Town</option>
+                  <option value="beamng">BeamNG.drive</option>
+                </select>
+              </label>
+              <label class="settings-field">
+                <span>Gearbox Output</span>
+                <select id="gearboxOutputMode" aria-label="Gearbox output mode">
+                  <option value="hold" selected>Hold</option>
+                  <option value="pulse">Pulse</option>
+                </select>
+              </label>
+              <label class="settings-field">
                 <span>Gearbox Position</span>
                 <select id="gearboxPosition" aria-label="Gearbox position">
                   <option value="right" selected>Right</option>
                   <option value="left">Left</option>
+                </select>
+              </label>
+              <label class="settings-field">
+                <span>Gearbox Type</span>
+                <select id="gearboxType" aria-label="Gearbox type">
+                  <option value="5-speed" selected>5 Speed</option>
+                  <option value="6-speed">6 Speed</option>
+                  <option value="truck-realistic">Truck H Range/Splitter</option>
+                  <option value="truck-direct">Truck Direct</option>
                 </select>
               </label>
             </div>
@@ -48,30 +79,35 @@
         <article class="panel joystick-panel primary-panel">
           <h2 class="sr-only" id="primaryControlTitle">Steering</h2>
           <output class="sr-only" id="joystickReadout">X 0.00 / Y 0.00</output>
-          <div class="signal-controls" aria-label="Turn signals">
-            <button class="signal-button" type="button" data-button="leftSignal" aria-pressed="false" aria-label="Left signal">&larr;</button>
-            <button class="signal-button" type="button" data-button="rightSignal" aria-pressed="false" aria-label="Right signal">&rarr;</button>
-          </div>
           <canvas id="joystickCanvas" width="420" height="420" aria-label="Joystick control"></canvas>
+          <div class="wheel-controls" aria-label="Steering wheel controls">
+            <button class="control-button icon-button wheel-button" type="button" data-button="leftSignal" aria-label="Left signal">&larr;</button>
+            <button class="control-button icon-button wheel-button horn-button" type="button" data-button="horn" aria-label="Horn">📯</button>
+            <button class="control-button icon-button wheel-button" type="button" data-button="rightSignal" aria-label="Right signal">&rarr;</button>
+          </div>
         </article>
 
         <article class="panel shifter-panel">
           <div class="shifter" id="shifter" aria-label="Five speed and reverse shifter">
             <div class="shift-gate" aria-hidden="true"></div>
-            <button class="gear-slot" type="button" data-gear="gear1" style="--col: 1; --row: 1">1</button>
-            <button class="gear-slot" type="button" data-gear="gear2" style="--col: 1; --row: 3">2</button>
-            <button class="gear-slot" type="button" data-gear="gear3" style="--col: 2; --row: 1">3</button>
-            <button class="gear-slot" type="button" data-gear="gear4" style="--col: 2; --row: 3">4</button>
-            <button class="gear-slot" type="button" data-gear="gear5" style="--col: 3; --row: 1">5</button>
-            <button class="gear-slot" type="button" data-gear="reverse" style="--col: 3; --row: 3">R</button>
             <div class="gear-knob" id="gearKnob" aria-hidden="true">N</div>
           </div>
           <output class="sr-only" id="buttonReadout">Ready</output>
+          <div class="truck-toggles" id="truckToggles" hidden>
+            <div class="truck-toggle-group" aria-label="Truck range">
+              <button class="truck-toggle" type="button" id="truckRangeToggle" aria-pressed="false">Range</button>
+            </div>
+            <div class="truck-toggle-group" aria-label="Truck splitter">
+              <button class="truck-toggle" type="button" id="truckSplitterToggle" aria-pressed="false">Splitter L</button>
+            </div>
+          </div>
+          <div class="reverse-toggle-wrap" id="reverseToggleWrap" hidden>
+            <button class="reverse-toggle" type="button" id="reverseToggle" aria-pressed="false">R</button>
+          </div>
           <div class="button-grid">
             <button class="control-button icon-button" type="button" data-button="handbrake" aria-label="Handbrake">🅿️</button>
             <button class="control-button icon-button" type="button" data-button="hazards" aria-label="Hazards">⚠️</button>
             <button class="control-button icon-button" type="button" data-button="lights" aria-label="Lights">💡</button>
-            <button class="control-button icon-button" type="button" data-button="horn" aria-label="Horn">📯</button>
           </div>
         </article>
 
