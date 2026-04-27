@@ -13,9 +13,10 @@ class LogInputAdapter:
         now = datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
         print(
-            "[{now}] client={client} ts={ts} "
+            "[{now}] module={module} client={client} ts={ts} "
             "joy=({jx:+.2f},{jy:+.2f}) clutch={clutch:.2f} throttle={throttle:.2f} brake={brake:.2f} buttons={buttons}".format(
                 now=now,
+                module=message.moduleId,
                 client=message.clientId,
                 ts=message.timestamp,
                 jx=axes.joystickX,

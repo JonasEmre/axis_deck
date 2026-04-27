@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from backend.app.input_router import InputRouter
+from backend.app.ksp_telemetry import KspTelemetryService
 from backend.app.schemas import ControlStateMessage, ErrorMessage
 from backend.app.ws_manager import WebSocketManager
 
@@ -14,8 +15,10 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = ROOT_DIR / "frontend"
 
 app = FastAPI(title="AxisDeck")
-manager = WebSocketManager()
+control_manager = WebSocketManager()
+telemetry_manager = WebSocketManager()
 input_router = InputRouter()
+ksp_telemetry = KspTelemetryService(telemetry_manager)
 
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
@@ -27,12 +30,27 @@ async def index() -> FileResponse:
 
 @app.get("/health")
 async def health() -> dict[str, str | int]:
-    return {"status": "ok", "activeConnections": manager.active_count}
+    return {
+        "status": "ok",
+        "activeConnections": control_manager.active_count,
+        "kspTelemetryConnections": telemetry_manager.active_count,
+        "kspTelemetryStatus": ksp_telemetry.latest.status,
+    }
+
+
+@app.on_event("startup")
+async def startup() -> None:
+    await ksp_telemetry.start()
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    await ksp_telemetry.stop()
 
 
 @app.websocket("/ws/control")
 async def control_socket(websocket: WebSocket) -> None:
-    connection = await manager.connect(websocket)
+    connection = await control_manager.connect(websocket)
 
     try:
         while True:
@@ -49,4 +67,20 @@ async def control_socket(websocket: WebSocket) -> None:
 
             await input_router.route(message)
     except WebSocketDisconnect:
-        manager.disconnect(connection.id)
+        pass
+    finally:
+        control_manager.disconnect(connection.id)
+
+
+@app.websocket("/ws/telemetry/ksp")
+async def ksp_telemetry_socket(websocket: WebSocket) -> None:
+    connection = await telemetry_manager.connect(websocket)
+    await telemetry_manager.send_json(connection.id, ksp_telemetry.latest.model_dump())
+
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        telemetry_manager.disconnect(connection.id)

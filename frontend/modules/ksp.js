@@ -16,7 +16,7 @@ export function mountKsp() {
   const gaugeEls = [...document.querySelectorAll(".ksp-gauge[data-gauge]")];
 
 const SEND_INTERVAL_MS = 100;
-const FRAME_INTERVAL_MS = 1000 / 30;
+const BUTTON_PULSE_MS = 140;
 const CONTROL_KNOB_COLOR = "#2A94D5";
 const ECAM_GREEN = "#32FF55";
 const ECAM_RED = "#FF3333";
@@ -28,29 +28,36 @@ const clientId = getClientId();
       throttle: 0,
       brake: 0,
       clutch: 0,
+      roll: 0,
+      translateForward: 0,
+      translateX: 0,
+      translateY: 0,
     },
     buttons: {
       sas: false,
       rcs: false,
       lights: false,
       gear: false,
+      stage: false,
     },
   };
   const telemetry = {
-    vesselName: "AxisDeck Demo Vessel",
+    vesselName: "Waiting Telemetry",
     speed: 0,
-    altitude: 7600,
+    altitude: 0,
+    apoapsisAltitude: 0,
+    periapsisAltitude: 0,
     verticalSpeed: 0,
-    timeToApoapsis: 112,
-    timeToPeriapsis: 286,
+    timeToApoapsis: 0,
+    timeToPeriapsis: 0,
     resources: {
-      solidFuel: 0.78,
-      liquidFuel: 0.64,
-      oxidizer: 0.59,
-      monoPropellant: 0.88,
-      electricCharge: 0.93,
-      intakeAir: 0.42,
-      gForce: 0.18,
+      solidFuel: 0,
+      liquidFuel: 0,
+      oxidizer: 0,
+      monoPropellant: 0,
+      electricCharge: 0,
+      intakeAir: 0,
+      gForce: 0,
       verticalSpeed: 0.5,
     },
   };
@@ -82,9 +89,13 @@ const clientId = getClientId();
     },
   };
 
-  let socket = null;
-  let reconnectTimer = null;
-  let lastMockAt = performance.now();
+  let controlSocket = null;
+  let telemetrySocket = null;
+  let controlReconnectTimer = null;
+  let telemetryReconnectTimer = null;
+  let controlConnected = false;
+  let telemetryStatus = "disconnected";
+  const buttonPulseTimers = new Map();
 
   function getClientId() {
     const existing = window.localStorage.getItem("ccpClientId");
@@ -102,38 +113,99 @@ const clientId = getClientId();
     statusEl.className = `status ${className}`;
   }
 
-  function connect() {
-    window.clearTimeout(reconnectTimer);
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${protocol}://${window.location.host}/ws/control`;
-
-    setStatus("Connecting", "");
-    socket = new WebSocket(wsUrl);
-
-    socket.addEventListener("open", () => {
-      setStatus("Connected", "connected");
-      sendState();
-    });
-
-    socket.addEventListener("close", () => {
+  function updateConnectionStatus() {
+    if (!controlConnected) {
       setStatus("Control Offline", "disconnected");
-      reconnectTimer = window.setTimeout(connect, 1500);
-    });
-
-    socket.addEventListener("error", () => {
-      setStatus("Control Error", "disconnected");
-      socket.close();
-    });
-  }
-
-  function sendState() {
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
       return;
     }
 
-    socket.send(
+    if (telemetryStatus === "connected") {
+      setStatus("KSP Connected", "connected");
+      return;
+    }
+
+    if (telemetryStatus === "connecting") {
+      setStatus("KSP Connecting", "");
+      return;
+    }
+
+    if (telemetryStatus === "waiting_vessel") {
+      setStatus("Waiting Vessel", "disconnected");
+      return;
+    }
+
+    setStatus("Waiting Telemetry", "disconnected");
+  }
+
+  function connectControl() {
+    window.clearTimeout(controlReconnectTimer);
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsUrl = `${protocol}://${window.location.host}/ws/control`;
+
+    controlConnected = false;
+    updateConnectionStatus();
+    controlSocket = new WebSocket(wsUrl);
+
+    controlSocket.addEventListener("open", () => {
+      controlConnected = true;
+      updateConnectionStatus();
+      sendState();
+    });
+
+    controlSocket.addEventListener("close", () => {
+      controlConnected = false;
+      updateConnectionStatus();
+      controlReconnectTimer = window.setTimeout(connectControl, 1500);
+    });
+
+    controlSocket.addEventListener("error", () => {
+      controlConnected = false;
+      updateConnectionStatus();
+      controlSocket.close();
+    });
+  }
+
+  function connectTelemetry() {
+    window.clearTimeout(telemetryReconnectTimer);
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsUrl = `${protocol}://${window.location.host}/ws/telemetry/ksp`;
+
+    telemetryStatus = "connecting";
+    updateConnectionStatus();
+    telemetrySocket = new WebSocket(wsUrl);
+
+    telemetrySocket.addEventListener("message", (event) => {
+      try {
+        applyTelemetryMessage(JSON.parse(event.data));
+      } catch {
+        telemetryStatus = "error";
+        updateConnectionStatus();
+      }
+    });
+
+    telemetrySocket.addEventListener("close", () => {
+      telemetryStatus = "disconnected";
+      updateConnectionStatus();
+      telemetryReconnectTimer = window.setTimeout(connectTelemetry, 1500);
+    });
+
+    telemetrySocket.addEventListener("error", () => {
+      telemetryStatus = "error";
+      updateConnectionStatus();
+      telemetrySocket.close();
+    });
+  }
+
+  function sendState(updateType = "full") {
+    if (!controlSocket || controlSocket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    controlSocket.send(
       JSON.stringify({
         type: "control_state",
+        updateType,
+        moduleId: "ksp",
         clientId,
         timestamp: Date.now(),
         axes: state.axes,
@@ -348,38 +420,60 @@ const clientId = getClientId();
     vesselNameEl.textContent = telemetry.vesselName;
     speedTextEl.textContent = `${formatNumber(telemetry.speed, 1)} m/s`;
     altitudeTextEl.textContent = `${formatNumber(telemetry.altitude, 0)} m`;
-    apoapsisTextEl.textContent = formatDuration(telemetry.timeToApoapsis);
-    periapsisTextEl.textContent = formatDuration(telemetry.timeToPeriapsis);
+    apoapsisTextEl.textContent = `${formatNumber(telemetry.apoapsisAltitude, 0)} m`;
+    periapsisTextEl.textContent = `${formatNumber(telemetry.periapsisAltitude, 0)} m`;
 
     gauges.forEach((gauge) => {
       gauge.draw(telemetry.resources[gauge.gaugeEl.dataset.gauge] ?? 0);
     });
   }
 
-  function tickMockTelemetry() {
-    const now = performance.now();
-    const elapsed = (now - lastMockAt) / 1000;
-    lastMockAt = now;
-    const phase = now / 1000;
+  function applyTelemetryMessage(message) {
+    if (!message || message.type !== "ksp_telemetry") {
+      return;
+    }
 
-    telemetry.speed = 186 + Math.sin(phase * 0.74) * 48 + state.axes.throttle * 130;
-    telemetry.altitude = Math.max(0, telemetry.altitude + (state.axes.throttle * 68 - 18 + Math.sin(phase) * 8) * elapsed);
-    telemetry.verticalSpeed = state.axes.throttle * 68 - 18 + Math.sin(phase) * 8;
-    telemetry.timeToApoapsis = Math.max(0, telemetry.timeToApoapsis - elapsed * 0.62);
-    telemetry.timeToPeriapsis = Math.max(0, telemetry.timeToPeriapsis - elapsed * 0.42);
-    telemetry.resources.solidFuel = clamp(telemetry.resources.solidFuel - state.axes.throttle * elapsed * 0.002, 0, 1);
-    telemetry.resources.liquidFuel = clamp(telemetry.resources.liquidFuel - state.axes.throttle * elapsed * 0.0012, 0, 1);
-    telemetry.resources.oxidizer = clamp(telemetry.resources.oxidizer - state.axes.throttle * elapsed * 0.0011, 0, 1);
-    telemetry.resources.monoPropellant = clamp(
-      telemetry.resources.monoPropellant - Math.hypot(pads.translate.x, pads.translate.y) * elapsed * 0.0008,
-      0,
-      1,
-    );
-    telemetry.resources.electricCharge = clamp(0.88 + Math.sin(phase * 0.35) * 0.07, 0, 1);
-    telemetry.resources.intakeAir = clamp(0.42 + Math.sin(phase * 0.9) * 0.2, 0, 1);
-    telemetry.resources.gForce = clamp(0.15 + Math.abs(pads.pitchYaw.y) * 0.42 + state.axes.throttle * 0.2, 0, 1);
-    telemetry.resources.verticalSpeed = clamp((telemetry.verticalSpeed + 80) / 160, 0, 1);
+    telemetryStatus = message.status || "disconnected";
 
+    if (telemetryStatus !== "connected") {
+      telemetry.vesselName = telemetryStatus === "waiting_vessel" ? "No Active Vessel" : "Waiting Telemetry";
+      telemetry.speed = 0;
+      telemetry.altitude = 0;
+      telemetry.apoapsisAltitude = 0;
+      telemetry.periapsisAltitude = 0;
+      telemetry.timeToApoapsis = 0;
+      telemetry.timeToPeriapsis = 0;
+      telemetry.verticalSpeed = 0;
+      telemetry.resources = {
+        solidFuel: 0,
+        liquidFuel: 0,
+        oxidizer: 0,
+        monoPropellant: 0,
+        electricCharge: 0,
+        intakeAir: 0,
+        gForce: 0,
+        verticalSpeed: 0.5,
+      };
+      updateConnectionStatus();
+      renderTelemetry();
+      return;
+    }
+
+    telemetry.vesselName = message.vesselName || "Unnamed Vessel";
+    telemetry.speed = Number(message.speed) || 0;
+    telemetry.altitude = Number(message.altitude) || 0;
+    telemetry.apoapsisAltitude = Number(message.apoapsisAltitude) || 0;
+    telemetry.periapsisAltitude = Number(message.periapsisAltitude) || 0;
+    telemetry.timeToApoapsis = Number(message.timeToApoapsis) || 0;
+    telemetry.timeToPeriapsis = Number(message.timeToPeriapsis) || 0;
+    telemetry.verticalSpeed = Number(message.verticalSpeed) || 0;
+    telemetry.resources = {
+      ...telemetry.resources,
+      ...(message.resources || {}),
+      verticalSpeed: normalizeVsi(Number(message.verticalSpeed) || 0),
+    };
+
+    updateConnectionStatus();
     renderTelemetry();
   }
 
@@ -399,10 +493,10 @@ const clientId = getClientId();
 
     if (pad === pads.pitchYaw) {
       state.axes.joystickX = pad.x;
-      state.axes.joystickY = pad.y;
+      state.axes.joystickY = roundAxis(-pad.y);
     } else {
-      state.axes.brake = (pad.x + 1) / 2;
-      state.axes.clutch = (-pad.y + 1) / 2;
+      state.axes.translateX = pad.x;
+      state.axes.translateY = roundAxis(-pad.y);
     }
 
     drawPad(pad);
@@ -418,8 +512,8 @@ const clientId = getClientId();
       state.axes.joystickX = 0;
       state.axes.joystickY = 0;
     } else {
-      state.axes.brake = 0;
-      state.axes.clutch = 0;
+      state.axes.translateX = 0;
+      state.axes.translateY = 0;
     }
 
     drawPad(pad);
@@ -458,9 +552,7 @@ const clientId = getClientId();
 
   function updateTranslateForward() {
     const normalized = Number(translateForwardEl.value) / 100;
-    state.buttons.translateForward = normalized > 0.08;
-    state.buttons.translateBackward = normalized < -0.08;
-    state.buttons.translateForwardAmount = normalized !== 0;
+    state.axes.translateForward = roundAxis(normalized);
     updateBipolarFill(translateForwardEl, normalized);
     translateForwardOutputEl.textContent = `${Math.round(normalized * 100)}%`;
     sendState();
@@ -468,9 +560,7 @@ const clientId = getClientId();
 
   function updateRoll() {
     const normalized = Number(rollEl.value) / 100;
-    state.buttons.rollLeft = normalized < -0.08;
-    state.buttons.rollRight = normalized > 0.08;
-    state.buttons.rollAmount = normalized !== 0;
+    state.axes.roll = roundAxis(normalized);
     updateBipolarFill(rollEl, normalized);
     sendState();
   }
@@ -485,15 +575,32 @@ const clientId = getClientId();
     inputEl.style.setProperty("--fill-negative", `${Math.max(0, -value) * 50}%`);
   }
 
+  function normalizeVsi(verticalSpeed) {
+    const direction = Math.sign(verticalSpeed);
+    const magnitude = Math.min(1000, Math.abs(verticalSpeed));
+    const normalizedMagnitude = Math.log10(magnitude + 1) / Math.log10(1001);
+    return clamp(0.5 + direction * normalizedMagnitude * 0.5, 0, 1);
+  }
+
   toggleEls.forEach((button) => {
     const buttonName = button.dataset.button;
 
     button.addEventListener("pointerdown", (event) => {
       event.preventDefault();
-      state.buttons[buttonName] = !state.buttons[buttonName];
-      button.classList.toggle("active", state.buttons[buttonName]);
-      button.setAttribute("aria-pressed", String(state.buttons[buttonName]));
-      sendState();
+      window.clearTimeout(buttonPulseTimers.get(buttonName));
+      state.buttons[buttonName] = true;
+      button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
+      sendState("buttons");
+
+      const timer = window.setTimeout(() => {
+        state.buttons[buttonName] = false;
+        button.classList.remove("active");
+        button.setAttribute("aria-pressed", "false");
+        sendState("buttons");
+        buttonPulseTimers.delete(buttonName);
+      }, BUTTON_PULSE_MS);
+      buttonPulseTimers.set(buttonName, timer);
     });
   });
 
@@ -529,7 +636,7 @@ const clientId = getClientId();
   updateRoll();
   updateTranslateForward();
   renderTelemetry();
-  connect();
-  window.setInterval(tickMockTelemetry, FRAME_INTERVAL_MS);
+  connectControl();
+  connectTelemetry();
   window.setInterval(sendState, SEND_INTERVAL_MS);
 }

@@ -25,16 +25,16 @@ PowerShell script policy hata verirse aynı komutu CMD wrapper ile çalıştır:
 PC üzerinde:
 
 ```text
-http://127.0.0.1:<port>
+http://127.0.0.1:3702
 ```
 
 Aynı Wi-Fi ağındaki tablet üzerinde:
 
 ```text
-http://<pc-ip>:<port>
+http://<pc-ip>:3702
 ```
 
-`start.ps1` varsayılan olarak vJoy adapter ile başlar. `8000` doluysa otomatik olarak `8001`, `8002` gibi ilk boş portu seçer ve konsola doğru PC/tablet adreslerini yazar.
+`start.ps1` varsayılan olarak vJoy adapter ile başlar ve sadece `3702` portunu kullanır. `3702` doluysa başka porta geçmez; önce o portu kullanan süreci kapatmak gerekir.
 
 Varsayılan çalıştırma tek server süreci açar. Kod değişikliklerini otomatik yeniden yükleyen geliştirme modu istersen:
 
@@ -103,6 +103,34 @@ ipconfig
 - vJoy'u Windows'ta aktif edip `AXISDECK_INPUT_ADAPTER=vjoy` ile gerçek analog axis emülasyonunu test etmek.
 - Oyun preset yapısını tasarlamak.
 
+## KSP Telemetry
+
+Kerbal Space Program 1 telemetry icin AxisDeck backend kRPC Python client kullanir. Kontrol cikisi bu fazda vJoy uzerinden devam eder; kRPC sadece veri okumak icindir.
+
+KSP tarafinda:
+
+- CKAN ile `kRPC` modunu kur.
+- KSP icinde kRPC server'i baslat.
+- Address: `localhost`
+- RPC port: `50000`
+- Stream port: `50001`
+- Gelistirme sirasinda `Auto-start server` ve `Auto-accept new clients` acik olabilir.
+
+AxisDeck tarafinda:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\start.ps1
+```
+
+KSP telemetry WebSocket endpoint'i:
+
+```text
+/ws/telemetry/ksp
+```
+
+`/health` cevabinda `kspTelemetryStatus` alani `connecting`, `connected`, `disconnected` veya `error` olarak gorunur. KSP kapaliyken AxisDeck calismaya devam eder ve KSP ekraninda `Waiting Telemetry` gosterilir.
+
 ## vJoy Test Modu
 
 vJoy Device 1 aktifse backend'i vJoy adapter ile başlat:
@@ -139,7 +167,18 @@ Beklenen mapping:
 - Left/Right signal -> vJoy Button 24-25
 - Hazards -> vJoy Button 26
 
-vJoy Config içinde Device 1 için `X`, `Y`, `Z`, `Rz`, `Slider 0` ve en az `26` button aktif olmalı.
+KSP modülünde beklenen ek mapping:
+
+- SAS -> vJoy Button 1
+- RCS -> vJoy Button 2
+- Lights -> vJoy Button 3
+- Gear -> vJoy Button 4
+- Stage -> vJoy Button 5
+- Roll -> vJoy Rx Axis
+- Translate FWD/BCK -> vJoy Ry Axis
+- Translate pad X/Y -> vJoy Rz Axis / Slider 0
+
+vJoy Config içinde Device 1 için `X`, `Y`, `Z`, `Rx`, `Ry`, `Rz`, `Slider 0` ve en az `26` button aktif olmalı.
 
 Gearbox Type ayarları:
 

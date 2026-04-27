@@ -11,6 +11,11 @@ const kspTemplate = document.querySelector("#kspTemplate");
 
 const MODULES = new Set(["steering", "ksp"]);
 
+function syncAppHeight() {
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+  document.documentElement.style.setProperty("--app-height", `${viewportHeight}px`);
+}
+
 function renderTemplate(template) {
   root.replaceChildren(template.content.cloneNode(true));
 }
@@ -64,6 +69,11 @@ root.addEventListener("click", (event) => {
     showModules();
   }
 });
+
+syncAppHeight();
+window.addEventListener("resize", syncAppHeight);
+window.visualViewport?.addEventListener("resize", syncAppHeight);
+window.visualViewport?.addEventListener("scroll", syncAppHeight);
 
 const activeModule = getActiveAppModule();
 

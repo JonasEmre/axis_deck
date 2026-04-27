@@ -345,11 +345,13 @@ function sendState() {
   }
 
   socket.send(
-    JSON.stringify({
-      type: "control_state",
-      clientId,
-      timestamp: Date.now(),
-      axes: state.axes,
+      JSON.stringify({
+        type: "control_state",
+        updateType: "full",
+        moduleId: "steering",
+        clientId,
+        timestamp: Date.now(),
+        axes: state.axes,
       buttons: state.buttons,
     }),
   );

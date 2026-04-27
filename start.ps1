@@ -3,13 +3,11 @@ param(
     [ValidateSet("vjoy", "log")]
     [string]$Adapter = "vjoy",
 
-    [int]$Port = 8000,
+    [int]$Port = 3702,
 
     [string]$HostAddress = "0.0.0.0",
 
     [int]$VJoyDeviceId = 1,
-
-    [switch]$NoAutoPort,
 
     [switch]$Reload
 )
@@ -22,7 +20,7 @@ $Python = Join-Path $Root ".venv\Scripts\python.exe"
 function Test-PortAvailable {
     param([int]$PortToCheck)
 
-    $connection = Get-NetTCPConnection -LocalPort $PortToCheck -ErrorAction SilentlyContinue |
+    $connection = Get-NetTCPConnection -LocalPort $PortToCheck -State Listen -ErrorAction SilentlyContinue |
         Select-Object -First 1
 
     return $null -eq $connection
@@ -55,17 +53,8 @@ if (-not (Test-Path $Python)) {
 }
 
 $SelectedPort = $Port
-if (-not $NoAutoPort) {
-    while (-not (Test-PortAvailable -PortToCheck $SelectedPort)) {
-        Write-Host "Port $SelectedPort dolu, sonraki port deneniyor..." -ForegroundColor Yellow
-        $SelectedPort += 1
-
-        if ($SelectedPort -gt ($Port + 50)) {
-            throw "Bos port bulunamadi. Baslangic portu: $Port"
-        }
-    }
-} elseif (-not (Test-PortAvailable -PortToCheck $SelectedPort)) {
-    throw "Port $SelectedPort dolu. Baska port ver veya -NoAutoPort kullanma."
+if (-not (Test-PortAvailable -PortToCheck $SelectedPort)) {
+    throw "Port $SelectedPort dolu. AxisDeck baska porta gecmeyecek; once bu portu kullanan sureci kapat."
 }
 
 $env:AXISDECK_INPUT_ADAPTER = $Adapter

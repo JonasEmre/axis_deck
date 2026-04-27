@@ -17,10 +17,14 @@ class VJoyInputAdapter:
             "joystickX": pyvjoy.HID_USAGE_X,
             "joystickY": pyvjoy.HID_USAGE_Y,
             "throttle": pyvjoy.HID_USAGE_Z,
+            "roll": pyvjoy.HID_USAGE_RX,
+            "translateForward": pyvjoy.HID_USAGE_RY,
+            "translateX": pyvjoy.HID_USAGE_RZ,
+            "translateY": pyvjoy.HID_USAGE_SL0,
             "brake": pyvjoy.HID_USAGE_RZ,
             "clutch": pyvjoy.HID_USAGE_SL0,
         }
-        self._button_map = {
+        self._steering_button_map = {
             "neutral": 1,
             "gear1": 2,
             "gear2": 3,
@@ -48,16 +52,31 @@ class VJoyInputAdapter:
             "rightSignal": 25,
             "hazards": 26,
         }
+        self._ksp_button_map = {
+            "sas": 1,
+            "rcs": 2,
+            "lights": 3,
+            "gear": 4,
+            "stage": 5,
+        }
 
     async def handle_control_state(self, message: ControlStateMessage) -> None:
-        axes = message.axes
-        self._set_axis("joystickX", self._signed_axis_to_vjoy(axes.joystickX))
-        self._set_axis("joystickY", self._signed_axis_to_vjoy(-axes.joystickY))
-        self._set_axis("throttle", self._unsigned_axis_to_vjoy(axes.throttle))
-        self._set_axis("brake", self._unsigned_axis_to_vjoy(axes.brake))
-        self._set_axis("clutch", self._unsigned_axis_to_vjoy(axes.clutch))
+        if message.updateType == "full":
+            axes = message.axes
+            self._set_axis("joystickX", self._signed_axis_to_vjoy(axes.joystickX))
+            self._set_axis("joystickY", self._signed_axis_to_vjoy(-axes.joystickY))
+            self._set_axis("throttle", self._unsigned_axis_to_vjoy(axes.throttle))
+            self._set_axis("roll", self._signed_axis_to_vjoy(axes.roll))
+            self._set_axis("translateForward", self._signed_axis_to_vjoy(axes.translateForward))
+            if message.moduleId == "ksp":
+                self._set_axis("translateX", self._signed_axis_to_vjoy(axes.translateX))
+                self._set_axis("translateY", self._signed_axis_to_vjoy(axes.translateY))
+            else:
+                self._set_axis("brake", self._unsigned_axis_to_vjoy(axes.brake))
+                self._set_axis("clutch", self._unsigned_axis_to_vjoy(axes.clutch))
 
-        for button_name, button_id in self._button_map.items():
+        button_map = self._ksp_button_map if message.moduleId == "ksp" else self._steering_button_map
+        for button_name, button_id in button_map.items():
             try:
                 self._device.set_button(button_id, int(message.buttons.get(button_name, False)))
             except Exception:
